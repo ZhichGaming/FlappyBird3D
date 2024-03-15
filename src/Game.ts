@@ -139,7 +139,9 @@ export default class Game {
             console.error(error);
         });
 
+        this.camera.position.y = 3;
         this.camera.position.z = 5;
+        this.camera.lookAt(0, 0, 0);
 
         // Resize canvas on window resize
         window.addEventListener('resize', () => {
