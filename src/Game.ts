@@ -88,7 +88,7 @@ export default class Game {
 
         this.scene.environment = pmremGenerator.fromScene( environment ).texture;
         
-        this.bird = new Bird(0, 0);
+        this.bird = new Bird(0, 0, 0);
 
         const sphereGeometry = new THREE.SphereGeometry( 500, 60, 40 );
         // invert the geometry on the x-axis so that all of the faces point inward
