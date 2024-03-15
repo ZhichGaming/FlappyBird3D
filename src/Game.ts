@@ -95,6 +95,7 @@ export default class Game {
         sphereGeometry.scale( -1, 1, 1 );
         sphereGeometry.rotateY(-Math.PI / 2);
 
+        // Skybox
         const sphereTexture = new THREE.TextureLoader().load( 'src/assets/daniel-glebinski-bg-04.jpg' );
         sphereTexture.colorSpace = THREE.SRGBColorSpace;
         const sphereMaterial = new THREE.MeshBasicMaterial( { map: sphereTexture } );
@@ -139,8 +140,9 @@ export default class Game {
             });
 
             this.floorMixer = new THREE.AnimationMixer( gltf.scene );
-            let action = this.floorMixer.clipAction( gltf.animations[0] );
-            action.play();
+            const action = gltf.animations[0];
+            const trimmedAction = THREE.AnimationUtils.subclip(action, 'move', 0, 1000);
+            this.floorMixer.clipAction(trimmedAction).play();
 
             this.scene.add(gltf.scene);
         }, undefined, (error) => {
@@ -176,7 +178,7 @@ export default class Game {
         this.moveBird();
 
         // Floor animation
-        if ( this.floorMixer ) this.floorMixer.update( delta * 5 );
+        if ( this.floorMixer ) this.floorMixer.update( delta );
         
         this.controls.update();
 
