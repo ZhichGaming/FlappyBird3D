@@ -86,7 +86,8 @@ export default class Game {
 
         const sphereGeometry = new THREE.SphereGeometry( 500, 60, 40 );
         // invert the geometry on the x-axis so that all of the faces point inward
-        sphereGeometry.scale( - 1, 1, 1 );
+        sphereGeometry.scale( -1, 1, 1 );
+        sphereGeometry.rotateY(-Math.PI / 2);
 
         const sphereTexture = new THREE.TextureLoader().load( 'src/assets/daniel-glebinski-bg-04.jpg' );
         sphereTexture.colorSpace = THREE.SRGBColorSpace;
@@ -95,7 +96,6 @@ export default class Game {
         const mesh = new THREE.Mesh( sphereGeometry, sphereMaterial );
 
         this.scene.add( mesh );
-
 
         this.loader.load('src/assets/phoenix_bird/scene.gltf', (gltf) => {
             this.birdModel = gltf.scene;
