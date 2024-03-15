@@ -8,6 +8,7 @@ import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
 import { fragmentShader } from './shaders/FragmentShader';
 import { vertexShader } from './shaders/VertexShader';
+import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import Bird from './Bird';
 
 const BLOOM_SCENE = 1;
@@ -81,6 +82,11 @@ export default class Game {
 
         this.bloomLayer = new THREE.Layers();
         this.bloomLayer.set(BLOOM_SCENE);
+
+        const environment = new RoomEnvironment( this.renderer );
+        const pmremGenerator = new THREE.PMREMGenerator( this.renderer );
+
+        this.scene.environment = pmremGenerator.fromScene( environment ).texture;
         
         this.bird = new Bird(0, 0);
 
@@ -127,6 +133,8 @@ export default class Game {
             this.floorModel.traverse((child) => {
                 if (child instanceof THREE.Mesh) {
                     child.layers.enable(BLOOM_SCENE);
+                    child.material.emissive = new THREE.Color(0xffffff);
+                    child.material.emissiveIntensity = 5;
                 }
             });
 
