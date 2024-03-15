@@ -96,7 +96,7 @@ export default class Game {
         sphereGeometry.rotateY(-Math.PI / 2);
 
         // Skybox
-        const sphereTexture = new THREE.TextureLoader().load( 'src/assets/daniel-glebinski-bg-04.jpg' );
+        const sphereTexture = new THREE.TextureLoader().load( 'src/assets/space-2638158.jpg' );
         sphereTexture.colorSpace = THREE.SRGBColorSpace;
         const sphereMaterial = new THREE.MeshBasicMaterial( { map: sphereTexture } );
 
@@ -104,10 +104,10 @@ export default class Game {
 
         this.scene.add( mesh );
 
-        this.loader.load('src/assets/phoenix_bird/scene.gltf', (gltf) => {
+        this.loader.load('src/assets/drone_concept/scene.gltf', (gltf) => {
             this.birdModel = gltf.scene;
-            this.birdModel.scale.set(0.005, 0.005, 0.005);
-            this.birdModel.rotateY(Math.PI / 2);
+            // this.birdModel.scale.set(0.005, 0.005, 0.005);
+            // this.birdModel.rotateY(Math.PI / 2);
             
             this.birdModel.traverse((child) => {
                 if (child instanceof THREE.Mesh) {
@@ -178,7 +178,7 @@ export default class Game {
         this.moveBird();
 
         // Floor animation
-        if ( this.floorMixer ) this.floorMixer.update( delta );
+        if ( this.floorMixer ) this.floorMixer.update( delta * 2 );
         
         this.controls.update();
 
@@ -192,7 +192,6 @@ export default class Game {
         requestAnimationFrame(this.animate.bind(this));
     }
 
-    
     private nonBloomed(obj: any) {
         if (obj.isMesh && this.bloomLayer.test(obj.layers) === false) {
             this.materials[obj.uuid] = obj.material;
