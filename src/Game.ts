@@ -12,6 +12,7 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import Bird from './Bird';
 
 const BLOOM_SCENE = 1;
+const FLOOR_SCALE = 5;
 
 export default class Game {
     private scene: THREE.Scene;
@@ -128,7 +129,7 @@ export default class Game {
             // const newMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xffffff, emissiveIntensity: 0.5 });
 
             this.floorModel = gltf.scene;
-            this.floorModel.scale.set(5, 5, 5);
+            this.floorModel.scale.set(FLOOR_SCALE, FLOOR_SCALE, FLOOR_SCALE);
             this.floorModel.position.set(0, 0, -50);
 
             this.floorModel.traverse((child) => {
@@ -170,12 +171,12 @@ export default class Game {
     }
 
     private animate() {
-        var delta = this.clock.getDelta();
+        const delta = this.clock.getDelta();
 
         // Bird animation
         if ( this.birdMixer ) this.birdMixer.update( delta );
 
-        this.moveBird();
+        this.moveBird(delta);
 
         // Floor animation
         if ( this.floorMixer ) this.floorMixer.update( delta * 2 );
@@ -206,8 +207,24 @@ export default class Game {
         }
     }
 
-    private moveBird() {
-        this.birdModel?.position.set(this.bird.getPosition().x, this.bird.getPosition().y, 0);
+    private moveBird(delta: number) {
+        this.birdModel?.position.set(this.bird.getPosition().x, this.bird.getPosition().y, this.bird.getPosition().z);
+        // this.birdModel?.setRotationFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 0, 1), new THREE.Vector3(this.bird.getVelocity().x, this.bird.getVelocity().y, this.bird.getVelocity().z).normalize()));
+        this.birdModel?.quaternion.rotateTowards(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 0, 1), new THREE.Vector3(this.bird.getVelocity().x, this.bird.getVelocity().y, this.bird.getVelocity().z).normalize()), delta * 10);
+
+        // Detect collision with floor
+        // I'm just going to use constants for the floor's position... I can't do this anymore!
+        const floorBottom = -5 * FLOOR_SCALE / 5;
+        const floorTop = 2 * FLOOR_SCALE / 5;
+
+        if (this.birdModel && this.birdModel?.position.y <= floorBottom) {
+            this.birdModel?.position.setY(floorBottom);
+            this.bird.setVelocity(this.bird.getVelocity().x, Math.abs(this.bird.getVelocity().y), this.bird.getVelocity().z);
+        } else if (this.birdModel && this.birdModel?.position.y >= floorTop) {
+            this.birdModel?.position.setY(floorTop);
+            this.bird.setVelocity(this.bird.getVelocity().x, -Math.abs(this.bird.getVelocity().y), this.bird.getVelocity().z);
+        }
+
         this.bird.move();
     }
 }
