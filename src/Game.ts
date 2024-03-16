@@ -10,6 +10,7 @@ import { fragmentShader } from './shaders/FragmentShader';
 import { vertexShader } from './shaders/VertexShader';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import Bird from './Bird';
+import Pipe from './Pipe';
 
 const BLOOM_SCENE = 1;
 const FLOOR_SCALE = 5;
@@ -34,6 +35,10 @@ export default class Game {
     bird: Bird;
     private birdModel?: THREE.Object3D;
     private birdMixer?: THREE.AnimationMixer;
+
+    pipes: Pipe[] = [];
+    private pipeModel?: THREE.Object3D;
+    private pipeModels: { [id: string]: THREE.Object3D } = {};
 
     private floorModel?: THREE.Object3D;
     private floorMixer?: THREE.AnimationMixer;
@@ -125,6 +130,20 @@ export default class Game {
             console.error(error);
         });
 
+        this.loader.load('src/assets/sci-fi_pipes_armored/scene.gltf', (gltf) => {
+            this.pipeModel = gltf.scene;
+
+            this.pipeModel.traverse((child) => {
+                if (child instanceof THREE.Mesh) {
+                    child.layers.enable(BLOOM_SCENE);
+                }
+            });
+
+            // this.scene.add(gltf.scene);
+        }, undefined, (error) => {
+            console.error(error);
+        });
+
         this.loader.load('src/assets/endless_floor_vr/scene.gltf', (gltf) => {
             // const newMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xffffff, emissiveIntensity: 0.5 });
 
@@ -164,6 +183,22 @@ export default class Game {
             this.camera.aspect = window.innerWidth / window.innerHeight;
             this.camera.updateProjectionMatrix();
         });
+
+        setInterval(this.spawnPipe.bind(this), 2000);
+    }
+    
+    private nonBloomed(obj: any) {
+        if (obj.isMesh && this.bloomLayer.test(obj.layers) === false) {
+            this.materials[obj.uuid] = obj.material;
+            obj.material = new THREE.MeshBasicMaterial({ color: 0x000000 });
+        }
+    }
+
+    private restoreMaterial(obj: any) {
+        if (this.materials[obj.uuid]) {
+            obj.material = this.materials[obj.uuid];
+            delete this.materials[obj.uuid];
+        }
     }
 
     public start() {
@@ -177,6 +212,14 @@ export default class Game {
         if ( this.birdMixer ) this.birdMixer.update( delta );
 
         this.moveBird(delta);
+
+        this.pipes.forEach((pipe, _) => {
+            const pipeModel = this.pipeModels[pipe.id];
+
+            if (pipeModel) {
+                this.movePipe(delta, pipe, pipeModel);
+            }
+        });
 
         // Floor animation
         if ( this.floorMixer ) this.floorMixer.update( delta * 2 );
@@ -193,24 +236,50 @@ export default class Game {
         requestAnimationFrame(this.animate.bind(this));
     }
 
-    private nonBloomed(obj: any) {
-        if (obj.isMesh && this.bloomLayer.test(obj.layers) === false) {
-            this.materials[obj.uuid] = obj.material;
-            obj.material = new THREE.MeshBasicMaterial({ color: 0x000000 });
+    private spawnPipe() {
+        const pipe = new Pipe(Math.random() * 10, 5, -50);
+        pipe.velocity.y = -0.2;
+        pipe.velocity.z = 0.2;
+
+        this.pipes.push(pipe);
+
+        const pipeModel = this.pipeModel?.clone();
+        
+        if (pipeModel) {
+            pipeModel.position.set(pipe.position.x, pipe.position.y, pipe.position.z);
+            pipeModel.scale.set(5, 5, 5);
+
+            this.scene.add(pipeModel);
+            this.pipeModels[pipe.id] = pipeModel;
         }
+
+        setTimeout(() => {
+            if (pipeModel) {
+                this.scene.remove(pipeModel);
+                delete this.pipeModels[pipe.id];
+            }
+
+            const index = this.pipes.indexOf(pipe);
+            if (index > -1) {
+                this.pipes.splice(index, 1);
+            }
+        }, 10000);
     }
 
-    private restoreMaterial(obj: any) {
-        if (this.materials[obj.uuid]) {
-            obj.material = this.materials[obj.uuid];
-            delete this.materials[obj.uuid];
+    private movePipe(delta: number, pipe: Pipe, pipeModel: THREE.Object3D) {
+        if (pipe.position.y <= -5) {
+            pipe.position.y = -5;
+            pipe.velocity.y = 0;
         }
+
+        pipeModel.position.set(pipe.position.x, pipe.position.y, pipe.position.z);
+        pipe.move();
     }
 
     private moveBird(delta: number) {
-        this.birdModel?.position.set(this.bird.getPosition().x, this.bird.getPosition().y, this.bird.getPosition().z);
+        this.birdModel?.position.set(this.bird.position.x, this.bird.position.y, this.bird.position.z);
         // this.birdModel?.setRotationFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 0, 1), new THREE.Vector3(this.bird.getVelocity().x, this.bird.getVelocity().y, this.bird.getVelocity().z).normalize()));
-        this.birdModel?.quaternion.rotateTowards(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 0, 1), new THREE.Vector3(this.bird.getVelocity().x, this.bird.getVelocity().y, this.bird.getVelocity().z).normalize()), delta * 10);
+        this.birdModel?.quaternion.rotateTowards(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 0, 1), new THREE.Vector3(this.bird.velocity.x, this.bird.velocity.y, this.bird.velocity.z).normalize()), delta * 10);
 
         // Detect collision with floor
         // I'm just going to use constants for the floor's position... I can't do this anymore!
@@ -219,10 +288,10 @@ export default class Game {
 
         if (this.birdModel && this.birdModel?.position.y <= floorBottom) {
             this.birdModel?.position.setY(floorBottom);
-            this.bird.setVelocity(this.bird.getVelocity().x, Math.abs(this.bird.getVelocity().y), this.bird.getVelocity().z);
+            this.bird.velocity.y = Math.abs(this.bird.velocity.y);
         } else if (this.birdModel && this.birdModel?.position.y >= floorTop) {
             this.birdModel?.position.setY(floorTop);
-            this.bird.setVelocity(this.bird.getVelocity().x, -Math.abs(this.bird.getVelocity().y), this.bird.getVelocity().z);
+            this.bird.velocity.y = -Math.abs(this.bird.velocity.y);
         }
 
         this.bird.move();
