@@ -335,14 +335,12 @@ export default class Game {
         // Detect collision with floor
         // I'm just going to use constants for the floor's position... I can't do this anymore!
         const floorBottom = -5 * FLOOR_SCALE / 5;
-        const floorTop = 2 * FLOOR_SCALE / 5;
+        const floorTop = 3 * FLOOR_SCALE / 5;
 
         if (this.birdModel && this.birdModel?.position.y <= floorBottom) {
-            this.birdModel?.position.setY(floorBottom);
-            this.bird.velocity.y = Math.abs(this.bird.velocity.y);
+            this.bird.position.y = floorBottom;
         } else if (this.birdModel && this.birdModel?.position.y >= floorTop) {
-            this.birdModel?.position.setY(floorTop);
-            this.bird.velocity.y = -Math.abs(this.bird.velocity.y);
+            this.bird.position.y = floorTop;
         }
 
         this.bird.move();
