@@ -275,9 +275,9 @@ export default class Game {
 
         // Bird animation
         if ( this.birdMixer ) this.birdMixer.update( delta );
-
         this.moveBird(delta);
 
+        // Moving pipes
         this.pipes.forEach((pipe, _) => {
             const pipeModel = this.pipeModels[pipe.id];
 
@@ -287,7 +287,7 @@ export default class Game {
         });
 
         // Floor animation
-        if ( this.floorMixer ) this.floorMixer.update( delta * 2 );
+        if ( this.floorMixer ) this.floorMixer.update( delta * 2 );        
         
         this.controls.update();
 
@@ -295,8 +295,6 @@ export default class Game {
         this.bloomComposer.render();
         this.scene.traverse(this.restoreMaterial.bind(this));
         this.finalComposer.render();
-
-        // this.renderer.render(this.scene, this.camera);
 
         requestAnimationFrame(this.animate.bind(this));
     }
@@ -369,6 +367,23 @@ export default class Game {
             this.bird.position.x = floorLeft;
         } else if (this.birdModel && this.birdModel?.position.x >= floorRight) {
             this.bird.position.x = floorRight;
+        }
+
+        // Detect collision with pipes
+        if (this.birdModel) {
+            const birdBox = new THREE.Box3().setFromObject(this.birdModel);
+
+            this.pipes.forEach((pipe, _) => {
+                const pipeModel = this.pipeModels[pipe.id];
+
+                if (pipeModel) {
+                    const pipeBox = new THREE.Box3().setFromObject(pipeModel);
+
+                    if (birdBox.intersectsBox(pipeBox)) {
+                        console.log('collision!');
+                    }
+                }
+            });
         }
 
         if (this.bird.velocity.x > 0) {
