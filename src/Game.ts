@@ -241,6 +241,14 @@ export default class Game {
             if (event.key === ' ') {
                 this.jump();
             }
+
+            if (event.key === 'a') {
+                this.moveLeft();
+            }
+
+            if (event.key === 'd') {
+                this.moveRight();
+            }
         });
     }
     
@@ -348,11 +356,25 @@ export default class Game {
         // I'm just going to use constants for the floor's position... I can't do this anymore!
         const floorBottom = -5 * FLOOR_SCALE / 5;
         const floorTop = 3 * FLOOR_SCALE / 5;
+        const floorLeft = -8 * FLOOR_SCALE / 5;
+        const floorRight = 8 * FLOOR_SCALE / 5;
 
         if (this.birdModel && this.birdModel?.position.y <= floorBottom) {
             this.bird.position.y = floorBottom;
         } else if (this.birdModel && this.birdModel?.position.y >= floorTop) {
             this.bird.position.y = floorTop;
+        } 
+        
+        if (this.birdModel && this.birdModel?.position.x <= floorLeft) {
+            this.bird.position.x = floorLeft;
+        } else if (this.birdModel && this.birdModel?.position.x >= floorRight) {
+            this.bird.position.x = floorRight;
+        }
+
+        if (this.bird.velocity.x > 0) {
+            this.bird.velocity.x -= 0.002;
+        } else if (this.bird.velocity.x < 0) {
+            this.bird.velocity.x += 0.002;
         }
 
         this.bird.move(delta);
@@ -360,5 +382,13 @@ export default class Game {
 
     private jump() {
         this.bird.velocity.y = 0.1;
+    }
+
+    private moveLeft() {
+        this.bird.velocity.x = -0.1;
+    }
+
+    private moveRight() {
+        this.bird.velocity.x = 0.1;
     }
 }
