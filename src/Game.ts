@@ -220,8 +220,8 @@ export default class Game {
             console.error(error);
         });
 
-        this.camera.position.y = 3;
-        this.camera.position.z = 5;
+        // this.camera.position.y = 3;
+        this.camera.position.z = 10;
         this.camera.lookAt(0, 0, 0);
 
         // Resize canvas on window resize
@@ -391,6 +391,9 @@ export default class Game {
         } else if (this.bird.velocity.x < 0) {
             this.bird.velocity.x += 0.002;
         }
+
+        this.camera.position.x = this.bird.position.x;
+        this.camera.position.y = this.bird.position.y;
 
         this.bird.move(delta);
     }
