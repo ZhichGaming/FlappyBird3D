@@ -9,6 +9,7 @@ import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
 import { fragmentShader } from './shaders/FragmentShader';
 import { vertexShader } from './shaders/VertexShader';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
+import GUI from 'lil-gui'; 
 import Bird from './Bird';
 import Pipe from './Pipe';
 
@@ -31,6 +32,7 @@ export default class Game {
     private mixPass: any;
     private bloomLayer: THREE.Layers;
     private materials: any;
+    private bloomParams: any;
     
     bird: Bird;
     private birdModel?: THREE.Object3D;
@@ -54,7 +56,15 @@ export default class Game {
         this.materials = [];
 
         this.renderScene = new RenderPass(this.scene, this.camera);
-        this.bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth * 1.5, window.innerHeight), 1.5, 0.4, 0.85);
+        this.bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1, 0, 0.85);
+
+        // const gui = new GUI();
+
+        this.bloomParams = {
+            bloomStrength: this.bloomPass.strength,
+            bloomThreshold: this.bloomPass.threshold,
+            bloomRadius: this.bloomPass.radius,
+        };
 
         this.bloomComposer = new EffectComposer( this.renderer );
         this.bloomComposer.renderToScreen = false;
@@ -151,13 +161,54 @@ export default class Game {
             this.floorModel.scale.set(FLOOR_SCALE, FLOOR_SCALE, FLOOR_SCALE);
             this.floorModel.position.set(0, 0, -50);
 
+            const floorModelParams = {
+                emissive: 0xffffff,
+                emissiveIntensity: 5,
+                metalness: 0.5,
+                roughness: 1,
+            };
+
             this.floorModel.traverse((child) => {
                 if (child instanceof THREE.Mesh) {
                     child.layers.enable(BLOOM_SCENE);
-                    child.material.emissive = new THREE.Color(0xffffff);
-                    child.material.emissiveIntensity = 5;
+                    child.material.emissive = new THREE.Color(floorModelParams.emissive);
+                    child.material.emissiveIntensity = floorModelParams.emissiveIntensity;
+                    
+                    if (child.material instanceof THREE.MeshStandardMaterial) {
+                        child.material.metalness = floorModelParams.metalness;
+                        child.material.roughness = floorModelParams.roughness;
+                    }
                 }
             });
+
+            // gui.add(floorModelParams, 'emissive', 0, 0xffffff).onChange(() => {
+            //     this.floorModel?.traverse((child) => {
+            //         if (child instanceof THREE.Mesh) {
+            //             child.material.emissive = new THREE.Color(floorModelParams.emissive);
+            //         }
+            //     });
+            // });
+            // gui.add(floorModelParams, 'emissiveIntensity', 0, 10).onChange(() => {
+            //     this.floorModel?.traverse((child) => {
+            //         if (child instanceof THREE.Mesh) {
+            //             child.material.emissiveIntensity = floorModelParams.emissiveIntensity;
+            //         }
+            //     });
+            // });
+            // gui.add(floorModelParams, 'metalness', 0, 1).onChange(() => {
+            //     this.floorModel?.traverse((child) => {
+            //         if (child instanceof THREE.Mesh && child.material instanceof THREE.MeshStandardMaterial) {
+            //             child.material.metalness = floorModelParams.metalness;
+            //         }
+            //     });
+            // });
+            // gui.add(floorModelParams, 'roughness', 0, 1).onChange(() => {
+            //     this.floorModel?.traverse((child) => {
+            //         if (child instanceof THREE.Mesh && child.material instanceof THREE.MeshStandardMaterial) {
+            //             child.material.roughness = floorModelParams.roughness;
+            //         }
+            //     });
+            // });
 
             this.floorMixer = new THREE.AnimationMixer( gltf.scene );
             const action = gltf.animations[0];
