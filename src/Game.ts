@@ -236,6 +236,12 @@ export default class Game {
         });
 
         setInterval(this.spawnPipe.bind(this), 2000);
+
+        document.addEventListener('keydown', (event) => {
+            if (event.key === ' ') {
+                this.jump();
+            }
+        });
     }
     
     private nonBloomed(obj: any) {
@@ -324,7 +330,7 @@ export default class Game {
         }
 
         pipeModel.position.set(pipe.position.x, pipe.position.y, pipe.position.z);
-        pipe.move();
+        pipe.move(delta);
     }
 
     private moveBird(delta: number) {
@@ -343,6 +349,10 @@ export default class Game {
             this.bird.position.y = floorTop;
         }
 
-        this.bird.move();
+        this.bird.move(delta);
+    }
+
+    private jump() {
+        this.bird.velocity.y = 0.05;
     }
 }

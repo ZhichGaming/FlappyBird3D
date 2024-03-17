@@ -12,7 +12,7 @@ function App() {
 
   return (
     <div>
-      <canvas id="canvas"></canvas>
+      <canvas id="canvas" tabIndex={0}></canvas>
     </div>
   )
 }

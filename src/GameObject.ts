@@ -15,27 +15,16 @@ export default class GameObject {
         this.id = Math.random().toString(36).substr(2, 9);
     }
 
-    update(deltaTime: number) {
-        // Update velocity based on acceleration
-        this.velocity.x += this.acceleration.x * deltaTime;
-        this.velocity.y += this.acceleration.y * deltaTime;
-        this.velocity.z += this.acceleration.z * deltaTime;
+    move(delta: number) {
+        let normalizedDelta = delta * 60;
+
+        this.velocity.x += this.acceleration.x * normalizedDelta;
+        this.velocity.y += this.acceleration.y * normalizedDelta;
+        this.velocity.z += this.acceleration.z * normalizedDelta;
 
         // Update position based on velocity
-        this.position.x += this.velocity.x * deltaTime;
-        this.position.y += this.velocity.y * deltaTime;
-        this.position.z += this.velocity.z * deltaTime;
-    }
-
-    // Movement and physics methods
-
-    move() {
-        this.velocity.x += this.acceleration.x;
-        this.velocity.y += this.acceleration.y;
-        this.velocity.z += this.acceleration.z;
-
-        this.position.x += this.velocity.x;
-        this.position.y += this.velocity.y;
-        this.position.z += this.velocity.z;
+        this.position.x += this.velocity.x * normalizedDelta;
+        this.position.y += this.velocity.y * normalizedDelta;
+        this.position.z += this.velocity.z * normalizedDelta;
     }
 }
