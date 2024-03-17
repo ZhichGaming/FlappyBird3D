@@ -336,7 +336,13 @@ export default class Game {
     private moveBird(delta: number) {
         this.birdModel?.position.set(this.bird.position.x, this.bird.position.y, this.bird.position.z);
         // this.birdModel?.setRotationFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 0, 1), new THREE.Vector3(this.bird.getVelocity().x, this.bird.getVelocity().y, this.bird.getVelocity().z).normalize()));
-        this.birdModel?.quaternion.rotateTowards(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 0, 1), new THREE.Vector3(this.bird.velocity.x, this.bird.velocity.y, this.bird.velocity.z).normalize()), delta * 10);
+
+        const unitForwards = new THREE.Vector3(0, 0, 1);
+        const unitVelocity = new THREE.Vector3(this.bird.velocity.x, this.bird.velocity.y, this.bird.velocity.z).multiplyScalar(3);
+        const averageVector = new THREE.Vector3().addVectors(unitForwards, unitVelocity).normalize();
+        const targetQuaternion = new THREE.Quaternion().setFromUnitVectors(unitForwards, averageVector);
+
+        this.birdModel?.quaternion.rotateTowards(targetQuaternion, delta * 10);
 
         // Detect collision with floor
         // I'm just going to use constants for the floor's position... I can't do this anymore!
@@ -353,6 +359,6 @@ export default class Game {
     }
 
     private jump() {
-        this.bird.velocity.y = 0.05;
+        this.bird.velocity.y = 0.1;
     }
 }
