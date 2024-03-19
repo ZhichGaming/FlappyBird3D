@@ -150,12 +150,16 @@ export default class Game2D {
             pipe.move(delta, this.getLevel().speed);
 
             if (this.getLevel().movingPipes) {
-                pipe.position.y += Math.sin(this.frameCount / 10) * 10;
+                const direction = pipe.position.y + pipe.spacing / 2 > window.innerHeight / 4 ? 1 : -1;
+                pipe.position.y += Math.sin(this.frameCount / 10) * 5 * direction;
             }
 
             if (pipe.position.x + pipe.width < this.bird.position.x && !pipe.passed) {
                 this.score++;
                 pipe.passed = true;
+
+                if (this.score == 69)
+                    this.score++
 
                 while (this.score >= LEVELS[this.stage + 1].requiredScore) {
                     this.stage++;
