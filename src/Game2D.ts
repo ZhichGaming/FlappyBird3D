@@ -8,10 +8,57 @@ export const BIRD_JUMP_VELOCITY = -8;
 export const BIRD_GRAVITY = 0.3;
 export const PIPE_WIDTH = 75;
 export const PIPE_HEIGHT = 500;
-export const PIPE_SPACING = 200;
 export const PIPE_VELOCITY = -5;
 export const FLOOR_WIDTH = 500;
 export const FLOOR_HEIGHT = 100;
+
+export const LEVELS = [
+    {
+        requiredScore: 0,
+        speed: 1,
+        pipeSpacing: 200,
+        movingPipes: false,
+    },
+    {
+        requiredScore: 10,
+        speed: 1.5,
+        pipeSpacing: 150,
+        movingPipes: false,
+    },
+    {
+        requiredScore: 20,
+        speed: 2,
+        pipeSpacing: 100,
+        movingPipes: true,
+    },
+    {
+        requiredScore: 30,
+        speed: 2,
+        pipeSpacing: 100,
+        movingPipes: true,
+    },
+    {
+        requiredScore: 40,
+        speed: 2,
+        pipeSpacing: 100,
+        movingPipes: true,
+    },
+    {
+        requiredScore: 50,
+        speed: 2,
+        pipeSpacing: 100,
+        movingPipes: true,
+    }
+]
+
+export enum GameState {
+    NORMAL_PIPES,
+    MORE_PIPES,
+    MOVING_PIPES,
+    JUMP_ABOVE_PIPE,
+    JUMP_BELOW_PIPE,
+    JUMP_OVER_PIPE,
+}
 
 export default class Game2D {
     canvas: HTMLCanvasElement;
@@ -24,6 +71,7 @@ export default class Game2D {
     private frameCount = 0;
 
     score = 0;
+    stage: GameState = GameState.NORMAL_PIPES;
 
     constructor() {
         this.canvas = document.getElementById('canvas') as HTMLCanvasElement;
@@ -87,7 +135,7 @@ export default class Game2D {
         // Add new pipe every x frames
         if (this.frameCount % 100 === 0) {
             const randomHeight = Math.random() * (window.innerHeight - PIPE_HEIGHT);
-            const randomSpacing = Math.random() * PIPE_SPACING + PIPE_SPACING;
+            const randomSpacing = Math.random() * this.getLevel().pipeSpacing + this.getLevel().pipeSpacing;
 
             this.pipes.push(new Pipe2D(PIPE_WIDTH, randomHeight, randomSpacing, new Vector2(window.innerWidth, 0)));
         }
@@ -99,11 +147,20 @@ export default class Game2D {
 
     private updatePipes(delta: number) {
         this.pipes.forEach((pipe) => {
-            pipe.move(delta);
+            pipe.move(delta, this.getLevel().speed);
+
+            if (this.getLevel().movingPipes) {
+                pipe.position.y += Math.sin(this.frameCount / 10) * 10;
+            }
 
             if (pipe.position.x + pipe.width < this.bird.position.x && !pipe.passed) {
                 this.score++;
                 pipe.passed = true;
+
+                while (this.score >= LEVELS[this.stage + 1].requiredScore) {
+                    this.stage++;
+                    console.log('Stage:', this.stage);
+                }
             }
         });
     }
@@ -139,7 +196,8 @@ export default class Game2D {
     private renderPipes() {
         this.pipes.forEach((pipe) => {
             const pipeImage = new Image();
-            pipeImage.src = 'src/assets/flappy-bird/sprites/pipe-green.png';
+            pipeImage.src = `src/assets/flappy-bird/sprites/pipe-${this.getLevel().movingPipes ? "red" : "green"}.png`;
+
 
             this.ctx.save();
             this.ctx.scale(1, -1);
@@ -155,7 +213,7 @@ export default class Game2D {
         groundImage.src = 'src/assets/flappy-bird/sprites/base.png';
 
         for (let i = 0; i < 6; i++) {
-            const deviation = this.frameCount * Math.abs(new Pipe2D(0, 0, 0).velocity.x);
+            const deviation = this.frameCount * Math.abs(PIPE_VELOCITY * this.getLevel().speed);
             const normalizedDeviation = deviation % FLOOR_WIDTH;
 
             this.ctx.drawImage(groundImage, i * FLOOR_WIDTH - normalizedDeviation, window.innerHeight - FLOOR_HEIGHT, FLOOR_WIDTH, FLOOR_HEIGHT);
@@ -176,6 +234,10 @@ export default class Game2D {
         }
 
         this.ctx.fillText(`High score: ${currentHighScore}`, 10, 80);
+    }
+
+    private getLevel() {
+        return LEVELS[this.stage];
     }
 
     private jump() {

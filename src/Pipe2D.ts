@@ -20,14 +20,14 @@ class Pipe2D {
         this.spacing = spacing;
     }
 
-    move(delta: number) {
+    move(delta: number, multiplier: number = 1) {
         const normalizedDelta = delta * 60;
 
         this.velocity.x += this.acceleration.x * normalizedDelta;
         this.velocity.y += this.acceleration.y * normalizedDelta;
 
-        this.position.x += this.velocity.x * normalizedDelta;
-        this.position.y += this.velocity.y * normalizedDelta;
+        this.position.x += this.velocity.x * normalizedDelta * multiplier;
+        this.position.y += this.velocity.y * normalizedDelta * multiplier;
     }
 
     hasFinishedPassing() {
