@@ -23,6 +23,8 @@ export default class Game2D {
     private lastTime?: Date;
     private frameCount = 0;
 
+    score = 0;
+
     constructor() {
         this.canvas = document.getElementById('canvas') as HTMLCanvasElement;
         this.ctx = this.canvas.getContext('2d')!;
@@ -98,6 +100,11 @@ export default class Game2D {
     private updatePipes(delta: number) {
         this.pipes.forEach((pipe) => {
             pipe.move(delta);
+
+            if (pipe.position.x + pipe.width < this.bird.position.x && !pipe.passed) {
+                this.score++;
+                pipe.passed = true;
+            }
         });
     }
 
@@ -107,6 +114,7 @@ export default class Game2D {
         this.renderBird()
         this.renderPipes();
         this.renderGround();
+        this.renderScore();
 
         if (this.isGameOver) {
             this.ctx.fillStyle = 'red';
@@ -152,6 +160,22 @@ export default class Game2D {
 
             this.ctx.drawImage(groundImage, i * FLOOR_WIDTH - normalizedDeviation, window.innerHeight - FLOOR_HEIGHT, FLOOR_WIDTH, FLOOR_HEIGHT);
         }
+    }
+
+    private renderScore() {
+        this.ctx.fillStyle = 'black';
+        this.ctx.font = '24px Calibri';
+        this.ctx.fillText(`Score: ${this.score}`, 10, 50);
+
+        // High score
+        const highScore = localStorage.getItem('highScore');
+        const currentHighScore = highScore ? parseInt(highScore) : 0;
+
+        if (this.score > currentHighScore) {
+            localStorage.setItem('highScore', this.score.toString());
+        }
+
+        this.ctx.fillText(`High score: ${currentHighScore}`, 10, 80);
     }
 
     private jump() {

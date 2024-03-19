@@ -9,6 +9,8 @@ class Pipe2D {
     height: number;
     spacing: number;
 
+    passed: boolean = false;
+
     constructor(width: number, height: number, spacing: number, position?: Vector2, velocity?: Vector2, acceleration?: Vector2) {
         this.position = position ?? new Vector2(0, 0);
         this.velocity = velocity ?? new Vector2(PIPE_VELOCITY, 0);
