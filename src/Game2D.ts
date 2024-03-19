@@ -134,7 +134,7 @@ export default class Game2D {
 
         // Add new pipe every x frames
         if (this.frameCount % 100 === 0) {
-            const randomHeight = Math.random() * (window.innerHeight - PIPE_HEIGHT);
+            const randomHeight = (Math.random() * 0.5) * window.innerHeight;
             const randomSpacing = Math.random() * this.getLevel().pipeSpacing + this.getLevel().pipeSpacing;
 
             this.pipes.push(new Pipe2D(PIPE_WIDTH, randomHeight, randomSpacing, new Vector2(window.innerWidth, 0)));
@@ -159,7 +159,6 @@ export default class Game2D {
 
                 while (this.score >= LEVELS[this.stage + 1].requiredScore) {
                     this.stage++;
-                    console.log('Stage:', this.stage);
                 }
             }
         });
@@ -197,7 +196,6 @@ export default class Game2D {
         this.pipes.forEach((pipe) => {
             const pipeImage = new Image();
             pipeImage.src = `src/assets/flappy-bird/sprites/pipe-${this.getLevel().movingPipes ? "red" : "green"}.png`;
-
 
             this.ctx.save();
             this.ctx.scale(1, -1);
