@@ -18,6 +18,8 @@ export default class Game2D {
         this.canvas.width = window.innerWidth;
         this.canvas.height = window.innerHeight;
 
+        this.canvas.style.backgroundImage = 'url("src/assets/flappy-bird/sprites/background-day.png")';
+
         this.bird = new Bird(0, 0, 0);
         this.bird.acceleration.y = 0.3;
         this.pipes = [];
@@ -73,7 +75,7 @@ export default class Game2D {
             const randomHeight = Math.random() * (window.innerHeight - 400);
             const randomSpacing = Math.random() * 200 + 200;
 
-            this.pipes.push(new Pipe2D(50, randomHeight, randomSpacing, new Vector2(window.innerWidth, 0)));
+            this.pipes.push(new Pipe2D(75, randomHeight, randomSpacing, new Vector2(window.innerWidth, 0)));
         }
     }
 
@@ -92,6 +94,7 @@ export default class Game2D {
 
         this.renderBird()
         this.renderPipes();
+        this.renderGround();
 
         if (this.isGameOver) {
             this.ctx.fillStyle = 'red';
@@ -101,18 +104,44 @@ export default class Game2D {
     }
 
     private renderBird() {
-        this.ctx.fillStyle = 'yellow';
-        this.ctx.fillRect(this.bird.position.x, this.bird.position.y, 50, 50);
+        const birdState = Math.floor(this.frameCount / 10) % 3;
+        const birdImage = new Image();
+        const birdImageNames = [
+            'downflap',
+            'midflap',
+            'upflap',
+        ];
+        
+        birdImage.src = `src/assets/flappy-bird/sprites/yellowbird-${birdImageNames[birdState]}.png`;
+        this.ctx.drawImage(birdImage, this.bird.position.x, this.bird.position.y, 34 * 2, 24 * 2);
     }
 
     private renderPipes() {
         this.pipes.forEach((pipe) => {
-            this.ctx.fillStyle = 'green';
-            this.ctx.fillRect(pipe.position.x, pipe.position.y, pipe.width, pipe.height);
+            const pipeImage = new Image();
+            pipeImage.src = 'src/assets/flappy-bird/sprites/pipe-green.png';
 
-            this.ctx.fillStyle = 'green';
-            this.ctx.fillRect(pipe.position.x, pipe.position.y + pipe.height + pipe.spacing, pipe.width, window.innerHeight - pipe.height - pipe.spacing);
+            this.ctx.save();
+            this.ctx.scale(1, -1);
+            this.ctx.drawImage(pipeImage, pipe.position.x, -pipe.position.y - pipe.height, pipe.width, window.innerHeight / 1.5);
+            this.ctx.restore();
+
+            this.ctx.drawImage(pipeImage, pipe.position.x, pipe.position.y + pipe.height + pipe.spacing, pipe.width, window.innerHeight / 1.5);
         });
+    }
+
+    private renderGround() {
+        const groundImage = new Image();
+        const floorWidth = 500;
+        const floorHeight = 100;
+        groundImage.src = 'src/assets/flappy-bird/sprites/base.png';
+
+        for (let i = 0; i < 6; i++) {
+            const deviation = this.frameCount * Math.abs(new Pipe2D(0, 0, 0).velocity.x);
+            const normalizedDeviation = deviation % floorWidth;
+
+            this.ctx.drawImage(groundImage, i * floorWidth - normalizedDeviation, window.innerHeight - floorHeight, floorWidth, floorHeight);
+        }
     }
 
     private jump() {
