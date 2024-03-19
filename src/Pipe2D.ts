@@ -1,4 +1,5 @@
 import { Vector2 } from "three";
+import { PIPE_VELOCITY } from "./Game2D";
 
 class Pipe2D {
     position: Vector2;
@@ -10,7 +11,7 @@ class Pipe2D {
 
     constructor(width: number, height: number, spacing: number, position?: Vector2, velocity?: Vector2, acceleration?: Vector2) {
         this.position = position ?? new Vector2(0, 0);
-        this.velocity = velocity ?? new Vector2(-5, 0);
+        this.velocity = velocity ?? new Vector2(PIPE_VELOCITY, 0);
         this.acceleration = acceleration ?? new Vector2(0, 0);
         this.width = width;
         this.height = height;

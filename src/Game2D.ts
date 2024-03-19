@@ -2,6 +2,17 @@ import { Vector2 } from "three";
 import Bird from "./Bird";
 import Pipe2D from "./Pipe2D";
 
+export const BIRD_WIDTH = 34 * 2;
+export const BIRD_HEIGHT = 24 * 2;
+export const BIRD_JUMP_VELOCITY = -8;
+export const BIRD_GRAVITY = 0.3;
+export const PIPE_WIDTH = 75;
+export const PIPE_HEIGHT = 500;
+export const PIPE_SPACING = 200;
+export const PIPE_VELOCITY = -5;
+export const FLOOR_WIDTH = 500;
+export const FLOOR_HEIGHT = 100;
+
 export default class Game2D {
     canvas: HTMLCanvasElement;
     ctx: CanvasRenderingContext2D;
@@ -21,7 +32,7 @@ export default class Game2D {
         this.canvas.style.backgroundImage = 'url("src/assets/flappy-bird/sprites/background-day.png")';
 
         this.bird = new Bird(0, 0, 0);
-        this.bird.acceleration.y = 0.3;
+        this.bird.acceleration.y = BIRD_GRAVITY;
         this.pipes = [];
         this.isGameOver = false;
 
@@ -56,10 +67,11 @@ export default class Game2D {
 
     private update(delta: number) {
         // Check for collision with pipes or ground
-        const isInTopPipe = this.pipes.some((pipe) => pipe.position.x < this.bird.position.x + 50 && pipe.position.x + pipe.width > this.bird.position.x && pipe.position.y < this.bird.position.y + 50 && pipe.position.y + pipe.height > this.bird.position.y);
-        const isInBottomPipe = this.pipes.some((pipe) => pipe.position.x < this.bird.position.x + 50 && pipe.position.x + pipe.width > this.bird.position.x && pipe.position.y + pipe.height + pipe.spacing < this.bird.position.y + 50 && pipe.position.y + pipe.height + pipe.spacing + window.innerHeight - pipe.height - pipe.spacing > this.bird.position.y);
+        const isInTopPipe = this.pipes.some((pipe) => pipe.position.x < this.bird.position.x + BIRD_WIDTH && pipe.position.x + pipe.width > this.bird.position.x && pipe.position.y < this.bird.position.y + BIRD_HEIGHT && pipe.position.y + pipe.height > this.bird.position.y);
+        const isInBottomPipe = this.pipes.some((pipe) => pipe.position.x < this.bird.position.x + BIRD_WIDTH && pipe.position.x + pipe.width > this.bird.position.x && pipe.position.y + pipe.height + pipe.spacing < this.bird.position.y + BIRD_HEIGHT && pipe.position.y + pipe.height + pipe.spacing + window.innerHeight - pipe.height - pipe.spacing > this.bird.position.y);
         const isInPipe = isInTopPipe || isInBottomPipe;
-        const isAboveGround = this.bird.position.y + 50 < window.innerHeight;
+        const isAboveGround = this.bird.position.y + BIRD_HEIGHT + FLOOR_HEIGHT < window.innerHeight;
+
         if (isInPipe || !isAboveGround) {
             this.isGameOver = true;
         }
@@ -72,10 +84,10 @@ export default class Game2D {
 
         // Add new pipe every x frames
         if (this.frameCount % 100 === 0) {
-            const randomHeight = Math.random() * (window.innerHeight - 400);
-            const randomSpacing = Math.random() * 200 + 200;
+            const randomHeight = Math.random() * (window.innerHeight - PIPE_HEIGHT);
+            const randomSpacing = Math.random() * PIPE_SPACING + PIPE_SPACING;
 
-            this.pipes.push(new Pipe2D(75, randomHeight, randomSpacing, new Vector2(window.innerWidth, 0)));
+            this.pipes.push(new Pipe2D(PIPE_WIDTH, randomHeight, randomSpacing, new Vector2(window.innerWidth, 0)));
         }
     }
 
@@ -113,7 +125,7 @@ export default class Game2D {
         ];
         
         birdImage.src = `src/assets/flappy-bird/sprites/yellowbird-${birdImageNames[birdState]}.png`;
-        this.ctx.drawImage(birdImage, this.bird.position.x, this.bird.position.y, 34 * 2, 24 * 2);
+        this.ctx.drawImage(birdImage, this.bird.position.x, this.bird.position.y, BIRD_WIDTH, BIRD_HEIGHT);
     }
 
     private renderPipes() {
@@ -132,20 +144,18 @@ export default class Game2D {
 
     private renderGround() {
         const groundImage = new Image();
-        const floorWidth = 500;
-        const floorHeight = 100;
         groundImage.src = 'src/assets/flappy-bird/sprites/base.png';
 
         for (let i = 0; i < 6; i++) {
             const deviation = this.frameCount * Math.abs(new Pipe2D(0, 0, 0).velocity.x);
-            const normalizedDeviation = deviation % floorWidth;
+            const normalizedDeviation = deviation % FLOOR_WIDTH;
 
-            this.ctx.drawImage(groundImage, i * floorWidth - normalizedDeviation, window.innerHeight - floorHeight, floorWidth, floorHeight);
+            this.ctx.drawImage(groundImage, i * FLOOR_WIDTH - normalizedDeviation, window.innerHeight - FLOOR_HEIGHT, FLOOR_WIDTH, FLOOR_HEIGHT);
         }
     }
 
     private jump() {
-        this.bird.velocity.y = -8;
+        this.bird.velocity.y = BIRD_JUMP_VELOCITY;
     }
 
     private delta() {
