@@ -1,5 +1,5 @@
 import { Vector2 } from "three";
-import Bird from "./Bird";
+import Bird from "../game/Bird";
 import Pipe2D from "./Pipe2D";
 
 export const BIRD_WIDTH = 34 * 2;
@@ -65,6 +65,7 @@ export default class Game2D {
     ctx: CanvasRenderingContext2D;
     bird: Bird;
     pipes: Pipe2D[];
+    bullets: Bullet[];
     isGameOver: boolean;
 
     private lastTime?: Date;
@@ -84,9 +85,14 @@ export default class Game2D {
         this.bird = new Bird(0, 0, 0);
         this.bird.acceleration.y = BIRD_GRAVITY;
         this.pipes = [];
+        this.bullets = [];
         this.isGameOver = false;
 
         this.setupEventListeners();
+    }
+
+    start() {
+        this.gameLoop();
     }
 
     private setupEventListeners() {
@@ -95,10 +101,6 @@ export default class Game2D {
                 this.jump();
             }
         });
-    }
-
-    start() {
-        this.gameLoop();
     }
 
     private gameLoop() {
@@ -114,6 +116,8 @@ export default class Game2D {
         this.frameCount++
         requestAnimationFrame(() => this.gameLoop());
     }
+
+    // Updating
 
     private update(delta: number) {
         // Check for collision with pipes or ground
@@ -167,6 +171,8 @@ export default class Game2D {
             }
         });
     }
+
+    // Rendering
 
     private render() {
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
@@ -238,6 +244,8 @@ export default class Game2D {
         this.ctx.fillText(`High score: ${currentHighScore}`, 10, 80);
     }
 
+    // Helpers
+
     private getLevel() {
         return LEVELS[this.stage];
     }
@@ -258,4 +266,17 @@ export default class Game2D {
 
         return delta / 1000;
     }
+}
+
+type Bullet = {
+    x?: number;
+    y?: number;
+    speed?: number;
+    type?: number;
+    xx?: number;
+    yy?: number;
+    nx?: number;
+    ny?: number;
+    rot?: number;
+    life?: number;
 }
