@@ -18,36 +18,42 @@ export const LEVELS = [
         requiredScore: 0,
         speed: 1,
         pipeSpacing: 200,
+        pipeInterval: 100,
         movingPipes: false,
     },
     {
         requiredScore: 10,
         speed: 1.5,
         pipeSpacing: 150,
+        pipeInterval: 70,
         movingPipes: false,
     },
     {
         requiredScore: 20,
         speed: 2,
         pipeSpacing: 100,
+        pipeInterval: 50,
         movingPipes: true,
     },
     {
         requiredScore: 30,
         speed: 2,
         pipeSpacing: 100,
+        pipeInterval: 50,
         movingPipes: true,
     },
     {
         requiredScore: 40,
         speed: 2,
         pipeSpacing: 100,
+        pipeInterval: 50,
         movingPipes: true,
     },
     {
         requiredScore: 50,
         speed: 2,
         pipeSpacing: 100,
+        pipeInterval: 50,
         movingPipes: true,
     }
 ]
@@ -83,22 +89,11 @@ export default class Game2D {
 
         this.canvas.style.backgroundImage = 'url("src/assets/flappy-bird/sprites/background-day.png")';
 
-        this.bird = new Bird(0, 0, 0);
+        this.bird = new Bird(50, 0, 0);
         this.bird.acceleration.y = BIRD_GRAVITY;
         this.pipes = [];
         this.bullets = [];
         this.isGameOver = false;
-
-        this.bullets.push(new Laser(this.canvas, this.ctx, new Vector2(1000 * Math.random(), 1000 * Math.random()), new Vector2(1000 * Math.random(), 1000 * Math.random()), LaserColor.RED));
-        this.bullets.push(new Laser(this.canvas, this.ctx, new Vector2(1000 * Math.random(), 1000 * Math.random()), new Vector2(1000 * Math.random(), 1000 * Math.random()), LaserColor.RED));
-        this.bullets.push(new Laser(this.canvas, this.ctx, new Vector2(1000 * Math.random(), 1000 * Math.random()), new Vector2(1000 * Math.random(), 1000 * Math.random()), LaserColor.RED));
-        this.bullets.push(new Laser(this.canvas, this.ctx, new Vector2(1000 * Math.random(), 1000 * Math.random()), new Vector2(1000 * Math.random(), 1000 * Math.random()), LaserColor.RED));
-        this.bullets.push(new Laser(this.canvas, this.ctx, new Vector2(1000 * Math.random(), 1000 * Math.random()), new Vector2(1000 * Math.random(), 1000 * Math.random()), LaserColor.RED));
-        this.bullets.push(new Laser(this.canvas, this.ctx, new Vector2(1000 * Math.random(), 1000 * Math.random()), new Vector2(1000 * Math.random(), 1000 * Math.random()), LaserColor.GREEN));
-        this.bullets.push(new Laser(this.canvas, this.ctx, new Vector2(1000 * Math.random(), 1000 * Math.random()), new Vector2(1000 * Math.random(), 1000 * Math.random()), LaserColor.GREEN));
-        this.bullets.push(new Laser(this.canvas, this.ctx, new Vector2(1000 * Math.random(), 1000 * Math.random()), new Vector2(1000 * Math.random(), 1000 * Math.random()), LaserColor.GREEN));
-        this.bullets.push(new Laser(this.canvas, this.ctx, new Vector2(1000 * Math.random(), 1000 * Math.random()), new Vector2(1000 * Math.random(), 1000 * Math.random()), LaserColor.GREEN));
-        this.bullets.push(new Laser(this.canvas, this.ctx, new Vector2(1000 * Math.random(), 1000 * Math.random()), new Vector2(1000 * Math.random(), 1000 * Math.random()), LaserColor.GREEN));
 
         this.setupEventListeners();
     }
@@ -149,7 +144,7 @@ export default class Game2D {
         this.pipes = this.pipes.filter((pipe) => !pipe.hasFinishedPassing());
 
         // Add new pipe every x frames
-        if (this.frameCount % 100 === 0) {
+        if (this.frameCount % this.getLevel().pipeInterval === 0) {
             const randomHeight = (Math.random() * 0.5) * window.innerHeight;
             const randomSpacing = Math.random() * this.getLevel().pipeSpacing + this.getLevel().pipeSpacing;
 
