@@ -5,8 +5,9 @@ import Laser, { LaserColor } from "./Laser";
 
 export const BIRD_WIDTH = 34 * 2;
 export const BIRD_HEIGHT = 24 * 2;
-export const BIRD_JUMP_VELOCITY = -8;
-export const BIRD_GRAVITY = 0.3;
+export const BIRD_X = 50;
+export const BIRD_JUMP_VELOCITY = -10;
+export const BIRD_GRAVITY = 0.6;
 export const PIPE_WIDTH = 75;
 export const PIPE_HEIGHT = 500;
 export const PIPE_VELOCITY = -5;
@@ -41,7 +42,7 @@ export const LEVELS = [
     {
         requiredScore: 30,
         speed: 2,
-        pipeSpacing: 100,
+        pipeSpacing: 200,
         pipeInterval: 50,
         movingPipes: true,
         lasers: true,
@@ -51,7 +52,7 @@ export const LEVELS = [
     {
         requiredScore: 40,
         speed: 2,
-        pipeSpacing: 100,
+        pipeSpacing: 200,
         pipeInterval: 50,
         movingPipes: true,
         lasers: false,
@@ -90,7 +91,7 @@ export default class Game2D {
 
         this.canvas.style.backgroundImage = 'url("src/assets/flappy-bird/sprites/background-day.png")';
 
-        this.bird = new Bird(50, 0, 0);
+        this.bird = new Bird(BIRD_X, 0, 0);
         this.bird.acceleration.y = BIRD_GRAVITY;
         this.pipes = [];
         this.bullets = [];
