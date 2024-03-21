@@ -1,6 +1,7 @@
 import { Vector2 } from "three";
 import Bird from "../game/Bird";
 import Pipe2D from "./Pipe2D";
+import Laser, { LaserColor } from "./Laser";
 
 export const BIRD_WIDTH = 34 * 2;
 export const BIRD_HEIGHT = 24 * 2;
@@ -65,7 +66,7 @@ export default class Game2D {
     ctx: CanvasRenderingContext2D;
     bird: Bird;
     pipes: Pipe2D[];
-    bullets: Bullet[];
+    bullets: Laser[];
     isGameOver: boolean;
 
     private lastTime?: Date;
@@ -87,6 +88,17 @@ export default class Game2D {
         this.pipes = [];
         this.bullets = [];
         this.isGameOver = false;
+
+        this.bullets.push(new Laser(this.canvas, this.ctx, new Vector2(1000 * Math.random(), 1000 * Math.random()), new Vector2(1000 * Math.random(), 1000 * Math.random()), LaserColor.RED));
+        this.bullets.push(new Laser(this.canvas, this.ctx, new Vector2(1000 * Math.random(), 1000 * Math.random()), new Vector2(1000 * Math.random(), 1000 * Math.random()), LaserColor.RED));
+        this.bullets.push(new Laser(this.canvas, this.ctx, new Vector2(1000 * Math.random(), 1000 * Math.random()), new Vector2(1000 * Math.random(), 1000 * Math.random()), LaserColor.RED));
+        this.bullets.push(new Laser(this.canvas, this.ctx, new Vector2(1000 * Math.random(), 1000 * Math.random()), new Vector2(1000 * Math.random(), 1000 * Math.random()), LaserColor.RED));
+        this.bullets.push(new Laser(this.canvas, this.ctx, new Vector2(1000 * Math.random(), 1000 * Math.random()), new Vector2(1000 * Math.random(), 1000 * Math.random()), LaserColor.RED));
+        this.bullets.push(new Laser(this.canvas, this.ctx, new Vector2(1000 * Math.random(), 1000 * Math.random()), new Vector2(1000 * Math.random(), 1000 * Math.random()), LaserColor.GREEN));
+        this.bullets.push(new Laser(this.canvas, this.ctx, new Vector2(1000 * Math.random(), 1000 * Math.random()), new Vector2(1000 * Math.random(), 1000 * Math.random()), LaserColor.GREEN));
+        this.bullets.push(new Laser(this.canvas, this.ctx, new Vector2(1000 * Math.random(), 1000 * Math.random()), new Vector2(1000 * Math.random(), 1000 * Math.random()), LaserColor.GREEN));
+        this.bullets.push(new Laser(this.canvas, this.ctx, new Vector2(1000 * Math.random(), 1000 * Math.random()), new Vector2(1000 * Math.random(), 1000 * Math.random()), LaserColor.GREEN));
+        this.bullets.push(new Laser(this.canvas, this.ctx, new Vector2(1000 * Math.random(), 1000 * Math.random()), new Vector2(1000 * Math.random(), 1000 * Math.random()), LaserColor.GREEN));
 
         this.setupEventListeners();
     }
@@ -175,12 +187,17 @@ export default class Game2D {
     // Rendering
 
     private render() {
+        this.ctx.setTransform(1, 0, 0, 1, 0, 0); // reset transform
+        this.ctx.globalAlpha = 1; // reset alpha
+        this.ctx.globalCompositeOperation = "source-over"; 
+
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
         this.renderBird()
         this.renderPipes();
         this.renderGround();
         this.renderScore();
+        this.renderLasers();
 
         if (this.isGameOver) {
             this.ctx.fillStyle = 'red';
@@ -244,6 +261,17 @@ export default class Game2D {
         this.ctx.fillText(`High score: ${currentHighScore}`, 10, 80);
     }
 
+    private renderLasers() {
+        for (let i = 0; i < this.bullets.length; i++) {
+            if (this.bullets[i].life < 0) {
+                this.bullets.splice(i, 1);
+                continue;
+            }
+
+            this.bullets[i].updateAndDraw();
+        }
+    }
+
     // Helpers
 
     private getLevel() {
@@ -266,17 +294,4 @@ export default class Game2D {
 
         return delta / 1000;
     }
-}
-
-type Bullet = {
-    x?: number;
-    y?: number;
-    speed?: number;
-    type?: number;
-    xx?: number;
-    yy?: number;
-    nx?: number;
-    ny?: number;
-    rot?: number;
-    life?: number;
 }
