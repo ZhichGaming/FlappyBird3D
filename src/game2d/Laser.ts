@@ -14,6 +14,9 @@ export const LASER_WIDTH = 4;
 
 export const GLOW_SIZE = 8;
 
+export const TARGET_SIZE = 128;
+export const TARGET_DISPLAY_FRAMES = 90;
+
 export let glowRed: HTMLCanvasElement | undefined;
 export let glowGreen: HTMLCanvasElement | undefined;
 export let glowRedCtx: CanvasRenderingContext2D | undefined;
@@ -40,6 +43,7 @@ export default class Laser {
     speed: number;
     color: LaserColor;
     life: number;
+    targetFrames: number;
 
     id: string;
 
@@ -59,6 +63,7 @@ export default class Laser {
 
         const distance = Math.sqrt(Math.pow(diffX, 2) + Math.pow(diffY, 2));
         this.life = Math.ceil(distance / this.speed);
+        this.targetFrames = TARGET_DISPLAY_FRAMES;
 
         this.id = Math.random().toString(36).substr(2, 9);
 
@@ -125,6 +130,25 @@ export default class Laser {
         if (!glowRed || !glowGreen || !laserRed || !laserGreen || !laserRedGlow || !laserGreenGlow) { 
             console.error("something is undefined among the following", glowRed, glowGreen, laserRed, laserGreen, laserRedGlow, laserGreenGlow);
             return
+        }
+
+        if (this.targetFrames > 0) {
+            this.targetFrames--;
+
+            const targetImage = new Image();
+            targetImage.src = 'src/assets/target.png';
+
+            const targetSize = TARGET_SIZE * (this.targetFrames / TARGET_DISPLAY_FRAMES) + 1;
+            const targetAlpha = 1 - this.targetFrames / TARGET_DISPLAY_FRAMES;
+
+            const targetX = this.finalPosition.x - targetSize / 2;
+            const targetY = this.finalPosition.y - targetSize / 2;
+
+            this.ctx.globalAlpha = targetAlpha;
+
+            this.ctx.drawImage(targetImage, targetX, targetY, targetSize, targetSize);
+
+            return;
         }
 
         this.life--;

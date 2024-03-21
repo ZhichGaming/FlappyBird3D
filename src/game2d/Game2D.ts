@@ -20,6 +20,7 @@ export const LEVELS = [
         pipeSpacing: 200,
         pipeInterval: 100,
         movingPipes: false,
+        lasers: false,
     },
     {
         requiredScore: 10,
@@ -27,6 +28,7 @@ export const LEVELS = [
         pipeSpacing: 150,
         pipeInterval: 70,
         movingPipes: false,
+        lasers: false,
     },
     {
         requiredScore: 20,
@@ -34,6 +36,7 @@ export const LEVELS = [
         pipeSpacing: 100,
         pipeInterval: 50,
         movingPipes: true,
+        lasers: false,
     },
     {
         requiredScore: 30,
@@ -41,6 +44,9 @@ export const LEVELS = [
         pipeSpacing: 100,
         pipeInterval: 50,
         movingPipes: true,
+        lasers: true,
+        laserCount: 5,
+        laserInterval: 200,
     },
     {
         requiredScore: 40,
@@ -48,13 +54,9 @@ export const LEVELS = [
         pipeSpacing: 100,
         pipeInterval: 50,
         movingPipes: true,
-    },
-    {
-        requiredScore: 50,
-        speed: 2,
-        pipeSpacing: 100,
-        pipeInterval: 50,
-        movingPipes: true,
+        lasers: false,
+        // laserCount: 10,
+        // laserInterval: 100,
     }
 ]
 
@@ -62,9 +64,8 @@ export enum GameState {
     NORMAL_PIPES,
     MORE_PIPES,
     MOVING_PIPES,
-    JUMP_ABOVE_PIPE,
-    JUMP_BELOW_PIPE,
-    JUMP_OVER_PIPE,
+    LASER,
+    PORTAL
 }
 
 export default class Game2D {
@@ -78,7 +79,7 @@ export default class Game2D {
     private lastTime?: Date;
     private frameCount = 0;
 
-    score = 0;
+    score = 30;
     stage: GameState = GameState.NORMAL_PIPES;
 
     constructor() {
@@ -150,6 +151,20 @@ export default class Game2D {
 
             this.pipes.push(new Pipe2D(PIPE_WIDTH, randomHeight, randomSpacing, new Vector2(window.innerWidth, 0)));
         }
+
+        // Part 1/2 of laser update, it's also updating in the render method
+        this.updateLasers(delta);
+
+        if (this.getLevel().lasers && this.getLevel().laserInterval) {
+            if (this.frameCount % this.getLevel().laserInterval! === 0) {
+                for (let i = 0; i < this.getLevel().laserCount!; i++) {
+                    const randomX = Math.random() * window.innerWidth;
+                    const randomY = Math.random() * window.innerHeight;
+
+                    this.bullets.push(new Laser(this.canvas, this.ctx, new Vector2(window.innerWidth, window.innerHeight * Math.random()), new Vector2(randomX + 100, randomY), LaserColor.RED));
+                }
+            }
+        }
     }
 
     private updateBird(delta: number) {
@@ -177,6 +192,13 @@ export default class Game2D {
                 }
             }
         });
+    }
+
+    private updateLasers(delta: number) {
+        for (let i = 0; i < this.bullets.length; i++) {
+            // this.bullets[i].initialPosition.x += PIPE_VELOCITY * this.getLevel().speed * delta * 60;
+            this.bullets[i].finalPosition.x += PIPE_VELOCITY * this.getLevel().speed * delta * 60;
+        }
     }
 
     // Rendering
