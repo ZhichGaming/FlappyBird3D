@@ -187,7 +187,7 @@ export default class Game2D {
                 if (this.score == 69)
                     this.score++
 
-                while (this.score >= LEVELS[this.stage + 1].requiredScore) {
+                while (this.score >= LEVELS[this.stage + 1].requiredScore && this.stage < LEVELS.length - 2) {
                     this.stage++;
                 }
             }
