@@ -210,7 +210,7 @@ export default class Game2D {
         });
     }
 
-    private updateLasers(delta: number) {
+    private updateLasers(_: number) {
         for (let i = 0; i < this.bullets.length; i++) {
             // this.bullets[i].initialPosition.x += PIPE_VELOCITY * this.getLevel().speed * delta * 60;
             // this.bullets[i].finalPosition.x += PIPE_VELOCITY * this.getLevel().speed * delta * 60;

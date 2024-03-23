@@ -1,7 +1,7 @@
 export default class ImageTools {
     private static xdx: number;
     private static xdy: number;
-    private static keep: boolean = false;
+    // private static keep: boolean = false;
 
     static canvas(width: number, height: number): HTMLCanvasElement {
         const c = document.createElement("canvas");
