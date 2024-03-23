@@ -55,8 +55,8 @@ export const LEVELS = [
         requiredScore: 40,
         speed: 2,
         pipeSpacing: 200,
-        pipeInterval: 50,
-        movingPipes: true,
+        pipeInterval: 100,
+        movingPipes: false,
         lasers: false,
         // laserCount: 10,
         // laserInterval: 100,
@@ -82,7 +82,7 @@ export default class Game2D {
     private lastTime?: Date;
     private frameCount = 0;
 
-    score = 0;
+    score = 49;
     stage: GameState = GameState.NORMAL_PIPES;
 
     constructor() {
@@ -150,11 +150,11 @@ export default class Game2D {
             return xStart < xBirdEnd && xEnd > xBirdStart && yStart < yBirdEnd && yEnd > yBirdStart;
         });
 
-        if (isInPipe || !isAboveGround || isInLaser) {
+        if ((isInPipe || !isAboveGround || isInLaser) && !this.bird.hidden) {
             this.isGameOver = true;
         }
 
-        this.updateBird(delta);
+        if (!this.bird.hidden) this.updateBird(delta);
         this.updatePipes(delta);
 
         // Remove offscreen pipes
@@ -165,7 +165,7 @@ export default class Game2D {
             const randomHeight = (Math.random() * 0.5) * window.innerHeight;
             const randomSpacing = Math.random() * this.getLevel().pipeSpacing + this.getLevel().pipeSpacing;
 
-            this.pipes.push(new Pipe2D(PIPE_WIDTH, randomHeight, randomSpacing, new Vector2(window.innerWidth, 0)));
+            this.pipes.push(new Pipe2D(PIPE_WIDTH, randomHeight, randomSpacing, this.score === 50, new Vector2(window.innerWidth, 0)));
         }
 
         // Part 1/2 of laser update, it's also updating in the render method
@@ -185,6 +185,10 @@ export default class Game2D {
 
     private updateBird(delta: number) {
         this.bird.move(delta);
+
+        if (this.stage === GameState.PORTAL) {
+            this.bird.position.x += 1 * delta * 60;
+        }
     }
 
     private updatePipes(delta: number) {
@@ -226,7 +230,7 @@ export default class Game2D {
 
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
 
-        this.renderBird()
+        if (!this.bird.hidden) this.renderBird();
         this.renderPipes();
         this.renderGround();
         this.renderScore();
@@ -249,7 +253,24 @@ export default class Game2D {
         ];
         
         birdImage.src = `src/assets/flappy-bird/sprites/yellowbird-${birdImageNames[birdState]}.png`;
-        this.ctx.drawImage(birdImage, this.bird.position.x, this.bird.position.y, BIRD_WIDTH, BIRD_HEIGHT);
+
+        let sourceWidth = birdImage.width;
+        let sourceHeight = birdImage.height;
+
+        if (this.pipes.filter((pipe) => pipe.hasPortal).length > 0) {
+            const portalPipe = this.pipes.find((pipe) => pipe.hasPortal)!;
+            const sourceWidthRatio = birdImage.width / BIRD_WIDTH;
+
+            sourceWidth = portalPipe.position.x > this.bird.position.x + BIRD_WIDTH ? birdImage.width : birdImage.width - (this.bird.position.x + BIRD_WIDTH - portalPipe.position.x) * sourceWidthRatio;
+
+            if (sourceWidth <= 0) {
+                sourceWidth = 0;
+
+                this.bird.hidden = true;
+            }
+        }
+
+        this.ctx.drawImage(birdImage, 0, 0, sourceWidth, sourceHeight, this.bird.position.x, this.bird.position.y, BIRD_WIDTH, BIRD_HEIGHT);
     }
 
     private renderPipes() {
@@ -263,6 +284,28 @@ export default class Game2D {
             this.ctx.restore();
 
             this.ctx.drawImage(pipeImage, pipe.position.x, pipe.position.y + pipe.height + pipe.spacing, pipe.width, window.innerHeight / 1.5);
+
+            if (pipe.hasPortal) {
+                if (pipe.portalAnimationProgress >= 8) {
+                    pipe.portalAnimationProgress = 0;
+                }
+
+                const portalImage = new Image();
+                portalImage.src = 'src/assets/portal.png';
+
+                const portalWidth = 498;
+                const portalHeight = 498;
+                const portalRenderedWidth = 100 * pipe.portalScale;
+                const portalRenderedHeight = 100 * pipe.portalScale;
+
+                const portalX = pipe.position.x + pipe.width / 2 - portalRenderedWidth / 2;
+                const portalY = pipe.position.y + pipe.height + pipe.spacing / 2 - portalRenderedHeight / 2;
+
+                this.ctx.drawImage(portalImage, portalWidth * pipe.portalAnimationProgress, 0, portalWidth, portalHeight, portalX, portalY, portalRenderedWidth, portalRenderedHeight);
+
+                if (this.frameCount % 10 === 0) pipe.portalAnimationProgress++;
+                if (pipe.portalScale < 2) pipe.portalScale += 0.05;
+            }
         });
     }
 
