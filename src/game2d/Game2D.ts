@@ -81,6 +81,7 @@ export default class Game2D {
 
     private lastTime?: Date;
     private frameCount = 0;
+    gameloopId: number = 0;
 
     score = 49;
     stage: GameState = GameState.NORMAL_PIPES;
@@ -106,6 +107,10 @@ export default class Game2D {
         this.gameLoop();
     }
 
+    stop() {
+        cancelAnimationFrame(this.gameloopId);
+    }
+
     private setupEventListeners() {
         document.addEventListener('keydown', (event) => {
             if (event.key === ' ') {
@@ -125,7 +130,7 @@ export default class Game2D {
         this.render();
 
         this.frameCount++
-        requestAnimationFrame(() => this.gameLoop());
+        this.gameloopId = requestAnimationFrame(() => this.gameLoop());
     }
 
     // Updating
