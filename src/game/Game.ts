@@ -112,9 +112,10 @@ export default class Game {
         sphereGeometry.rotateY(-Math.PI / 2);
 
         // Skybox
-        const sphereTexture = new THREE.TextureLoader().load( 'src/assets/space-2638158.jpg' );
+        const sphereTexture = new THREE.TextureLoader().load( 'src/assets/space.jpg' );
         sphereTexture.colorSpace = THREE.SRGBColorSpace;
-        const sphereMaterial = new THREE.MeshBasicMaterial( { map: sphereTexture } );
+        // sphereTexture.
+        const sphereMaterial = new THREE.MeshStandardMaterial( { map: sphereTexture, envMapIntensity: 5 } );
 
         const mesh = new THREE.Mesh( sphereGeometry, sphereMaterial );
 
