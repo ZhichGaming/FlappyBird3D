@@ -36,6 +36,7 @@ export default class Laser {
     canvas: HTMLCanvasElement;
     ctx: CanvasRenderingContext2D;
 
+    position: Vector2;
     initialPosition: Vector2;
     finalPosition: Vector2;
     rotation: number;
@@ -51,6 +52,7 @@ export default class Laser {
         this.canvas = canvas;
         this.ctx = ctx;
 
+        this.position = initialPosition;
         this.initialPosition = initialPosition;
         this.finalPosition = finalPosition;
 
@@ -59,7 +61,7 @@ export default class Laser {
         this.rotation = Math.atan2(diffY, diffX);
 
         this.color = color;
-        this.speed = speed ?? 16;
+        this.speed = speed ?? 32;
 
         const distance = Math.sqrt(Math.pow(diffX, 2) + Math.pow(diffY, 2));
         this.life = Math.ceil(distance / this.speed);
@@ -132,6 +134,10 @@ export default class Laser {
             return
         }
 
+        this.ctx.setTransform(1, 0, 0, 1, 0, 0); // reset transform
+        this.ctx.globalAlpha = 1; // reset alpha
+        this.ctx.globalCompositeOperation = "source-over"; 
+
         if (this.targetFrames > 0) {
             this.targetFrames--;
 
@@ -147,13 +153,29 @@ export default class Laser {
             this.ctx.globalAlpha = targetAlpha;
 
             this.ctx.drawImage(targetImage, targetX, targetY, targetSize, targetSize);
-
-            return;
         }
 
-        this.life--;
+        const lineAlpha = 0.5;
+        this.ctx.globalAlpha = lineAlpha;
 
-        if (this.life < 5) {
+        this.ctx.setLineDash([5, 3]);/*dashes are 5px and spaces are 3px*/
+        this.ctx.beginPath();
+        this.ctx.moveTo(this.position.x, this.position.y);
+        this.ctx.lineTo(this.finalPosition.x, this.finalPosition.y);
+        this.ctx.stroke();
+
+        this.ctx.globalAlpha = 1;
+
+        if (this.targetFrames > 0) return;
+
+        this.life--;
+        // const distanceToTravel = Math.sqrt(Math.pow(this.position.x - this.finalPosition.x, 2) + Math.pow(this.position.y - this.finalPosition.y, 2));
+        // this.life = Math.ceil(distanceToTravel / this.speed);
+        // const distance = Math.sqrt(Math.pow(this.finalPosition.x - this.initialPosition.x, 2) + Math.pow(this.finalPosition.y - this.initialPosition.y, 2));
+        // const distanceTravelled = Math.sqrt(Math.pow(this.initialPosition.x - this.finalPosition.x, 2) + Math.pow(this.initialPosition.y - this.finalPosition.y, 2));
+        // this.life = Math.ceil(distance - distanceTravelled);
+
+        if (this.life < 0) {
             if (this.color === LaserColor.RED) {
                 img = laserRedGlow;
             } else {
@@ -162,13 +184,13 @@ export default class Laser {
 
             if (img) {
                 this.ctx.globalCompositeOperation = "lighter";
-                ImageTools.drawImage(img, this.initialPosition.x, this.initialPosition.y, (4 - this.life) * (4 - this.life), this.rotation, 1, this.ctx);
-                ImageTools.drawImage(img, this.initialPosition.x, this.initialPosition.y, 4, this.rotation, this.life / 4, this.ctx);
+                ImageTools.drawImage(img, this.position.x, this.position.y, (4 - this.life) * (4 - this.life), this.rotation, 1, this.ctx);
+                ImageTools.drawImage(img, this.position.x, this.position.y, 4, this.rotation, this.life / 4, this.ctx);
                 this.ctx.globalCompositeOperation = "source-over";
             }
         } else {
-            this.initialPosition.x += this.speed * Math.cos(this.rotation);
-            this.initialPosition.y += this.speed * Math.sin(this.rotation);
+            this.position.x += this.speed * Math.cos(this.rotation);
+            this.position.y += this.speed * Math.sin(this.rotation);
 
             if (this.color === LaserColor.RED) {
                 img = laserRed;
@@ -179,10 +201,10 @@ export default class Laser {
             }
 
             this.ctx.globalCompositeOperation = "lighter";
-            ImageTools.drawImage(imgGlow, this.initialPosition.x, this.initialPosition.y, 1, this.rotation, 1, this.ctx);
-            ImageTools.drawImage(imgGlow, this.initialPosition.x, this.initialPosition.y, 2, this.rotation, Math.random() / 2, this.ctx);
+            ImageTools.drawImage(imgGlow, this.position.x, this.position.y, 1, this.rotation, 1, this.ctx);
+            ImageTools.drawImage(imgGlow, this.position.x, this.position.y, 2, this.rotation, Math.random() / 2, this.ctx);
             this.ctx.globalCompositeOperation = "source-over";
-            ImageTools.drawImage(img, this.initialPosition.x, this.initialPosition.y, 1, this.rotation, 1, this.ctx);
+            ImageTools.drawImage(img, this.position.x, this.position.y, 1, this.rotation, 1, this.ctx);
         }
     }
 }

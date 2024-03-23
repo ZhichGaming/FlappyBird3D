@@ -1,7 +1,7 @@
 import { Vector2 } from "three";
 import Bird from "../game/Bird";
 import Pipe2D from "./Pipe2D";
-import Laser, { LaserColor } from "./Laser";
+import Laser, { LASER_LEN, LASER_WIDTH, LaserColor } from "./Laser";
 
 export const BIRD_WIDTH = 34 * 2;
 export const BIRD_HEIGHT = 24 * 2;
@@ -22,6 +22,8 @@ export const LEVELS = [
         pipeInterval: 100,
         movingPipes: false,
         lasers: false,
+        laserCount: 5,
+        laserInterval: 200,
     },
     {
         requiredScore: 10,
@@ -46,7 +48,7 @@ export const LEVELS = [
         pipeInterval: 50,
         movingPipes: true,
         lasers: true,
-        laserCount: 5,
+        laserCount: 2,
         laserInterval: 200,
     },
     {
@@ -80,7 +82,7 @@ export default class Game2D {
     private lastTime?: Date;
     private frameCount = 0;
 
-    score = 30;
+    score = 0;
     stage: GameState = GameState.NORMAL_PIPES;
 
     constructor() {
@@ -134,8 +136,21 @@ export default class Game2D {
         const isInBottomPipe = this.pipes.some((pipe) => pipe.position.x < this.bird.position.x + BIRD_WIDTH && pipe.position.x + pipe.width > this.bird.position.x && pipe.position.y + pipe.height + pipe.spacing < this.bird.position.y + BIRD_HEIGHT && pipe.position.y + pipe.height + pipe.spacing + window.innerHeight - pipe.height - pipe.spacing > this.bird.position.y);
         const isInPipe = isInTopPipe || isInBottomPipe;
         const isAboveGround = this.bird.position.y + BIRD_HEIGHT + FLOOR_HEIGHT < window.innerHeight;
+        const isInLaser = this.bullets.some((laser) => {
+            const xStart = laser.position.x;
+            const xEnd = laser.position.x + LASER_WIDTH;
+            const yStart = laser.position.y;
+            const yEnd = laser.position.y + LASER_LEN;
 
-        if (isInPipe || !isAboveGround) {
+            const xBirdStart = this.bird.position.x;
+            const xBirdEnd = this.bird.position.x + BIRD_WIDTH;
+            const yBirdStart = this.bird.position.y;
+            const yBirdEnd = this.bird.position.y + BIRD_HEIGHT;
+
+            return xStart < xBirdEnd && xEnd > xBirdStart && yStart < yBirdEnd && yEnd > yBirdStart;
+        });
+
+        if (isInPipe || !isAboveGround || isInLaser) {
             this.isGameOver = true;
         }
 
@@ -159,10 +174,10 @@ export default class Game2D {
         if (this.getLevel().lasers && this.getLevel().laserInterval) {
             if (this.frameCount % this.getLevel().laserInterval! === 0) {
                 for (let i = 0; i < this.getLevel().laserCount!; i++) {
-                    const randomX = Math.random() * window.innerWidth;
+                    // const randomX = Math.random() * window.innerWidth + 100;
                     const randomY = Math.random() * window.innerHeight;
 
-                    this.bullets.push(new Laser(this.canvas, this.ctx, new Vector2(window.innerWidth, window.innerHeight * Math.random()), new Vector2(randomX + 100, randomY), LaserColor.RED));
+                    this.bullets.push(new Laser(this.canvas, this.ctx, new Vector2(window.innerWidth, window.innerHeight * Math.random()), new Vector2(BIRD_X, randomY), LaserColor.RED));
                 }
             }
         }
@@ -198,7 +213,7 @@ export default class Game2D {
     private updateLasers(delta: number) {
         for (let i = 0; i < this.bullets.length; i++) {
             // this.bullets[i].initialPosition.x += PIPE_VELOCITY * this.getLevel().speed * delta * 60;
-            this.bullets[i].finalPosition.x += PIPE_VELOCITY * this.getLevel().speed * delta * 60;
+            // this.bullets[i].finalPosition.x += PIPE_VELOCITY * this.getLevel().speed * delta * 60;
         }
     }
 
