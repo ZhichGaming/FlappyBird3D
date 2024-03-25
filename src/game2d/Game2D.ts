@@ -2,6 +2,7 @@ import { Vector2 } from "three";
 import Bird from "../game/Bird";
 import Pipe2D from "./Pipe2D";
 import Laser, { LASER_LEN, LASER_WIDTH, LaserColor } from "./Laser";
+import { game } from "../App";
 
 export const BIRD_WIDTH = 34 * 2;
 export const BIRD_HEIGHT = 24 * 2;
@@ -74,6 +75,7 @@ export enum GameState {
 export default class Game2D {
     canvas: HTMLCanvasElement;
     ctx: CanvasRenderingContext2D;
+    background: HTMLImageElement;
     bird: Bird;
     pipes: Pipe2D[];
     bullets: Laser[];
@@ -81,18 +83,21 @@ export default class Game2D {
 
     private lastTime?: Date;
     private frameCount = 0;
-    gameloopId: number = 0;
+    private stopped = false;
+    private gameloopId: number = 0;
 
     score = 49;
     stage: GameState = GameState.NORMAL_PIPES;
 
-    constructor() {
-        this.canvas = document.getElementById('canvas') as HTMLCanvasElement;
+    constructor(canvas: HTMLCanvasElement) {
+        this.canvas = canvas;
         this.ctx = this.canvas.getContext('2d')!;
         this.canvas.width = window.innerWidth;
         this.canvas.height = window.innerHeight;
 
-        this.canvas.style.backgroundImage = 'url("src/assets/flappy-bird/sprites/background-day.png")';
+        // this.canvas.style.backgroundImage = 'url("src/assets/flappy-bird/sprites/background-day.png")';
+        this.background = new Image();
+        this.background.src = 'src/assets/flappy-bird/sprites/background-day.png';
 
         this.bird = new Bird(BIRD_X, 0, 0);
         this.bird.acceleration.y = BIRD_GRAVITY;
@@ -109,6 +114,7 @@ export default class Game2D {
 
     stop() {
         cancelAnimationFrame(this.gameloopId);
+        this.stopped = true;
     }
 
     private setupEventListeners() {
@@ -130,7 +136,8 @@ export default class Game2D {
         this.render();
 
         this.frameCount++
-        this.gameloopId = requestAnimationFrame(() => this.gameLoop());
+
+        if (!this.stopped) this.gameloopId = requestAnimationFrame(() => this.gameLoop());
     }
 
     // Updating
@@ -234,6 +241,10 @@ export default class Game2D {
         this.ctx.globalCompositeOperation = "source-over"; 
 
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
+        // this.ctx.drawImage(this.background, 0, 0, this.canvas.width, this.canvas.height);
+        for (let i = 0; i < Math.ceil(this.canvas.width / this.background.width); i++) {
+            this.ctx.drawImage(this.background, i * this.background.width, 0, this.background.width/this.background.height*this.canvas.height, this.canvas.height);
+        }
 
         if (!this.bird.hidden) this.renderBird();
         this.renderPipes();
@@ -272,6 +283,7 @@ export default class Game2D {
                 sourceWidth = 0;
 
                 this.bird.hidden = true;
+                this.toGame3D();
             }
         }
 
@@ -374,5 +386,14 @@ export default class Game2D {
         this.lastTime = currentTime;
 
         return delta / 1000;
+    }
+
+    private toGame3D() {
+        this.canvas.style.zIndex = '-1';
+        document.getElementById('canvas')!.style.zIndex = '1';
+
+        this.stop();
+
+        game.start();
     }
 }

@@ -8,15 +8,16 @@ export let game2d: Game2D;
 
 function App() {
   useEffect(() => {
-    // game = new Game();
+    game = new Game();
     // game.start();
-    game2d = new Game2D();
+    game2d = new Game2D(document.getElementById("game2d") as HTMLCanvasElement);
     game2d.start();
   }, []);
 
   return (
-    <div>
-      <canvas id="canvas" tabIndex={0}></canvas>
+    <div className="canvas-container">
+      <canvas id="game2d" tabIndex={0}></canvas>
+      <canvas id="canvas"></canvas>
     </div>
   )
 }

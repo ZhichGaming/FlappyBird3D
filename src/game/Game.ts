@@ -12,6 +12,7 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import GUI from 'lil-gui'; 
 import Bird from './Bird';
 import Pipe from './Pipe';
+import Game2D from '../game2d/Game2D';
 
 const BLOOM_SCENE = 1;
 const FLOOR_SCALE = 5;
@@ -45,9 +46,15 @@ export default class Game {
     private floorModel?: THREE.Object3D;
     private floorMixer?: THREE.AnimationMixer;
 
+    private stars: THREE.Object3D[] = [];
+
+    private planeMesh?: THREE.Mesh<THREE.PlaneGeometry, THREE.MeshBasicMaterial, THREE.Object3DEventMap>;
+    private planetMesh?: THREE.Mesh;
+
     constructor() {
         this.scene = new THREE.Scene();
         this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
+        // this.camera = new THREE.OrthographicCamera(window.innerWidth / - 2, window.innerWidth / 2, window.innerHeight / 2, window.innerHeight / - 2, 1, 1000);
         this.renderer = new THREE.WebGLRenderer({ canvas: document.getElementById('canvas') as HTMLCanvasElement });
         this.renderer.setSize(window.innerWidth, window.innerHeight);
         this.loader = new GLTFLoader();
@@ -221,9 +228,19 @@ export default class Game {
             console.error(error);
         });
 
-        // this.camera.position.y = 3;
-        this.camera.position.z = 10;
-        this.camera.lookAt(0, 0, 0);
+        this.camera.position.x = 80;
+        this.camera.position.y = 80;
+        this.camera.position.z = 80;
+
+        const cameraOrientation = new THREE.Vector3(100, 100, 100);
+        this.camera.lookAt(cameraOrientation);
+        this.controls.target = cameraOrientation;
+
+        for (let i = 0; i < 10000; i++) {
+            this.spawnStar();
+        }
+
+        this.spawnPlanet();
 
         // Resize canvas on window resize
         window.addEventListener('resize', () => {
@@ -269,6 +286,8 @@ export default class Game {
 
     public start() {
         this.animate();
+
+        this.planeMesh!.material.map!.needsUpdate = true;
     }
 
     private animate() {
@@ -328,6 +347,62 @@ export default class Game {
                 this.pipes.splice(index, 1);
             }
         }, 10000);
+    }
+
+    private spawnStar() {
+        const geometry = new THREE.SphereGeometry(1, 16, 16);
+        const material = new THREE.MeshStandardMaterial({ color: 0xffffff });
+        const star = new THREE.Mesh(geometry, material);
+
+        const starRange = 1000;
+        const size = 0.5;
+
+        star.position.set(Math.random() * starRange - starRange / 2, Math.random() * starRange - starRange / 2, Math.random() * starRange - starRange / 2);
+        star.scale.set(size, size, size);
+
+        star.layers.enable(BLOOM_SCENE);
+        this.scene.add(star);
+        this.stars.push(star);
+    }
+
+    private async spawnPlanet() {
+        const geometry = new THREE.SphereGeometry(10, 50, 50);
+        // const texture = new THREE.TextureLoader().load('src/assets/space.jpg');
+        // texture.mapping = THREE.EquirectangularReflectionMapping;
+        const material = new THREE.MeshPhysicalMaterial({
+            roughness: 0, // has to be 0
+            metalness: 0, // has to be 0
+            color: 0xffffff,
+            // envMap: texture,
+            transmission: 1,
+            ior: 2.33, // controls reflectiveness, value between 1 and 2.33
+        })
+        const planet = new THREE.Mesh(geometry, material);
+        planet.position.set(100, 100, 100);
+
+        const canvas2d = document.getElementById('game2d') as HTMLCanvasElement;
+        const game2dTexture = new THREE.CanvasTexture(canvas2d);
+
+        const width = 16;
+        const height = width / canvas2d.width * canvas2d.height;
+
+        const plane = new THREE.PlaneGeometry(width, height);
+        const planeMaterial = new THREE.MeshBasicMaterial({ 
+            map: game2dTexture,
+            // transparent: true,
+            opacity: 1,
+            color: 0xffffff,
+            side: THREE.DoubleSide,
+        });
+
+        const planeMesh = new THREE.Mesh(plane, planeMaterial);
+        planeMesh.position.set(100, 100, 100);
+
+        this.scene.add(planet);
+        this.scene.add(planeMesh);
+
+        this.planeMesh = planeMesh;
+        this.planetMesh = planet;
     }
 
     private movePipe(delta: number, pipe: Pipe, pipeModel: THREE.Object3D) {
@@ -393,8 +468,8 @@ export default class Game {
             this.bird.velocity.x += 0.002;
         }
 
-        this.camera.position.x = this.bird.position.x;
-        this.camera.position.y = this.bird.position.y;
+        // this.camera.position.x = this.bird.position.x;
+        // this.camera.position.y = this.bird.position.y;
 
         this.bird.move(delta);
     }
