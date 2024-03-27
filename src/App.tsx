@@ -9,9 +9,9 @@ export let game2d: Game2D;
 function App() {
   useEffect(() => {
     game = new Game();
-    // game.start();
-    game2d = new Game2D(document.getElementById("game2d") as HTMLCanvasElement);
-    game2d.start();
+    game.start();
+    // game2d = new Game2D(document.getElementById("game2d") as HTMLCanvasElement);
+    // game2d.start();
   }, []);
 
   return (

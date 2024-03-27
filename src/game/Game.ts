@@ -17,6 +17,9 @@ import Game2D from '../game2d/Game2D';
 const BLOOM_SCENE = 1;
 const FLOOR_SCALE = 5;
 
+const PLANET_POSITION = [150, 100, 150] as const;
+const RELATIVE_PORTAL_POSITION = [-90, -35, -70] as const;
+
 export default class Game {
     private scene: THREE.Scene;
     private camera: THREE.PerspectiveCamera;
@@ -35,9 +38,12 @@ export default class Game {
     private materials: any;
     private bloomParams: any;
     
-    bird: Bird;
+    bird?: Bird;
     private birdModel?: THREE.Object3D;
     private birdMixer?: THREE.AnimationMixer;
+
+    bird2d?: Bird;
+    private bird2dSprite?: THREE.Sprite;
 
     pipes: Pipe[] = [];
     private pipeModel?: THREE.Object3D;
@@ -50,6 +56,9 @@ export default class Game {
 
     private planeMesh?: THREE.Mesh<THREE.PlaneGeometry, THREE.MeshBasicMaterial, THREE.Object3DEventMap>;
     private planetMesh?: THREE.Mesh;
+
+    private portalModel?: THREE.Object3D;
+    private portalMixer?: THREE.AnimationMixer;
 
     constructor() {
         this.scene = new THREE.Scene();
@@ -111,8 +120,77 @@ export default class Game {
 
         this.scene.environment = pmremGenerator.fromScene( environment ).texture;
         
-        this.bird = new Bird(0, 0, 0);
+        this.loadSkybox();
 
+        this.loadBird();
+        this.loadPipe();
+        this.loadFloor();
+        this.loadPortal();
+
+        for (let i = 0; i < 10000; i++) {
+            this.spawnStar();
+        }
+
+        this.spawnPlanet();
+
+        this.camera.position.x = 60;
+        this.camera.position.y = 55;
+        this.camera.position.z = 50;
+
+        const cameraOrientation = new THREE.Vector3(150, 100, 150);
+        this.camera.lookAt(cameraOrientation);
+        this.controls.target = cameraOrientation;
+
+        // Resize canvas on window resize
+        window.addEventListener('resize', () => {
+            const canvas = document.getElementById('canvas') as HTMLCanvasElement;
+            canvas.width = window.innerWidth;
+            canvas.height = window.innerHeight;
+
+            this.renderer.setSize(window.innerWidth, window.innerHeight);
+            this.camera.aspect = window.innerWidth / window.innerHeight;
+            this.camera.updateProjectionMatrix();
+        });
+
+        // TODO: Rewrite in relation to frame rate
+        setInterval(this.spawnPipe.bind(this), 2000);
+
+        document.addEventListener('keydown', (event) => {
+            if (event.key === ' ') {
+                this.jump();
+            }
+
+            if (event.key === 'a') {
+                this.moveLeft();
+            }
+
+            if (event.key === 'd') {
+                this.moveRight();
+            }
+        });
+    }
+    
+    private nonBloomed(obj: any) {
+        if (obj.isMesh && this.bloomLayer.test(obj.layers) === false) {
+            this.materials[obj.uuid] = obj.material;
+            obj.material = new THREE.MeshBasicMaterial({ color: 0x000000 });
+        }
+    }
+
+    private restoreMaterial(obj: any) {
+        if (this.materials[obj.uuid]) {
+            obj.material = this.materials[obj.uuid];
+            delete this.materials[obj.uuid];
+        }
+    }
+
+    public start() {
+        this.animate();
+
+        this.planeMesh!.material.map!.needsUpdate = true;
+    }
+
+    private loadSkybox() {
         const sphereGeometry = new THREE.SphereGeometry( 500, 60, 40 );
         // invert the geometry on the x-axis so that all of the faces point inward
         sphereGeometry.scale( -1, 1, 1 );
@@ -127,11 +205,15 @@ export default class Game {
         const mesh = new THREE.Mesh( sphereGeometry, sphereMaterial );
 
         this.scene.add( mesh );
+    }
 
-        this.loader.load('src/assets/drone_concept/scene.gltf', (gltf) => {
+    private loadBird() {
+        this.bird = new Bird(0, 0, 0);
+
+        this.loader.load('src/assets/phoenix_bird/scene.gltf', (gltf) => {
             this.birdModel = gltf.scene;
-            // this.birdModel.scale.set(0.005, 0.005, 0.005);
-            // this.birdModel.rotateY(Math.PI / 2);
+            this.birdModel.scale.set(0.005, 0.005, 0.005);
+            this.birdModel.rotateY(Math.PI / 2);
             
             this.birdModel.traverse((child) => {
                 if (child instanceof THREE.Mesh) {
@@ -148,6 +230,23 @@ export default class Game {
             console.error(error);
         });
 
+        const map = new THREE.TextureLoader().load('src/assets/flappy-bird/sprites/yellowbird-downflap.png');
+
+        this.bird2d = new Bird(...(PLANET_POSITION.map((pos, index) => pos + RELATIVE_PORTAL_POSITION[index]) as [number, number, number]));
+        this.bird2dSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: map, color: 0xffffff }));
+        this.bird2dSprite.scale.set(3, 3, 3);
+
+        const multiplier = 0.5;
+        this.bird2d.velocity.x = 0.1 * multiplier;
+        this.bird2d.velocity.y = -0.05 * multiplier;
+        this.bird2d.velocity.z = -0.1 * multiplier;
+
+        this.bird2d.acceleration.y = 0;
+
+        this.scene.add(this.bird2dSprite);
+    }
+
+    private loadPipe() {
         this.loader.load('src/assets/sci-fi_pipes_armored/scene.gltf', (gltf) => {
             this.pipeModel = gltf.scene;
 
@@ -161,7 +260,9 @@ export default class Game {
         }, undefined, (error) => {
             console.error(error);
         });
+    }
 
+    private loadFloor() {
         this.loader.load('src/assets/endless_floor_vr/scene.gltf', (gltf) => {
             // const newMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xffffff, emissiveIntensity: 0.5 });
 
@@ -227,67 +328,31 @@ export default class Game {
         }, undefined, (error) => {
             console.error(error);
         });
+    }
 
-        this.camera.position.x = 80;
-        this.camera.position.y = 80;
-        this.camera.position.z = 80;
+    private loadPortal() {
+        this.loader.load('src/assets/triangular_animated_portal/scene.gltf', (gltf) => {
+            this.portalModel = gltf.scene;
 
-        const cameraOrientation = new THREE.Vector3(100, 100, 100);
-        this.camera.lookAt(cameraOrientation);
-        this.controls.target = cameraOrientation;
+            this.portalModel.traverse((child) => {
+                if (child instanceof THREE.Mesh) {
+                    child.layers.enable(BLOOM_SCENE);
+                }
+            });
 
-        for (let i = 0; i < 10000; i++) {
-            this.spawnStar();
-        }
+            this.portalMixer = new THREE.AnimationMixer( gltf.scene );
+            let action = this.portalMixer.clipAction( gltf.animations[0] );
+            action.play();
 
-        this.spawnPlanet();
+            this.scene.add(gltf.scene);
 
-        // Resize canvas on window resize
-        window.addEventListener('resize', () => {
-            const canvas = document.getElementById('canvas') as HTMLCanvasElement;
-            canvas.width = window.innerWidth;
-            canvas.height = window.innerHeight;
-
-            this.renderer.setSize(window.innerWidth, window.innerHeight);
-            this.camera.aspect = window.innerWidth / window.innerHeight;
-            this.camera.updateProjectionMatrix();
+            this.portalModel.scale.set(5, 5, 5);
+            this.portalModel.position.set(PLANET_POSITION[0] - 90, PLANET_POSITION[1] - 35, PLANET_POSITION[2] - 70);
+            this.portalModel.rotateX(-Math.PI / 2);
+            this.portalModel.rotateZ(-Math.PI / 4);
+        }, undefined, (error) => {
+            console.error(error);
         });
-
-        setInterval(this.spawnPipe.bind(this), 2000);
-
-        document.addEventListener('keydown', (event) => {
-            if (event.key === ' ') {
-                this.jump();
-            }
-
-            if (event.key === 'a') {
-                this.moveLeft();
-            }
-
-            if (event.key === 'd') {
-                this.moveRight();
-            }
-        });
-    }
-    
-    private nonBloomed(obj: any) {
-        if (obj.isMesh && this.bloomLayer.test(obj.layers) === false) {
-            this.materials[obj.uuid] = obj.material;
-            obj.material = new THREE.MeshBasicMaterial({ color: 0x000000 });
-        }
-    }
-
-    private restoreMaterial(obj: any) {
-        if (this.materials[obj.uuid]) {
-            obj.material = this.materials[obj.uuid];
-            delete this.materials[obj.uuid];
-        }
-    }
-
-    public start() {
-        this.animate();
-
-        this.planeMesh!.material.map!.needsUpdate = true;
     }
 
     private animate() {
@@ -307,8 +372,14 @@ export default class Game {
         });
 
         // Floor animation
-        if ( this.floorMixer ) this.floorMixer.update( delta * 2 );        
-        
+        if ( this.floorMixer ) this.floorMixer.update( delta * 2 );
+
+        // Portal animation
+        if ( this.portalMixer ) this.portalMixer.update( delta );
+
+        this.planeMesh?.rotateX(delta / 10);
+        this.planeMesh?.rotateY(delta / 10);
+
         this.controls.update();
 
         this.scene.traverse(this.nonBloomed.bind(this));
@@ -366,7 +437,7 @@ export default class Game {
     }
 
     private async spawnPlanet() {
-        const geometry = new THREE.SphereGeometry(10, 50, 50);
+        const geometry = new THREE.SphereGeometry(50, 50, 50);
         // const texture = new THREE.TextureLoader().load('src/assets/space.jpg');
         // texture.mapping = THREE.EquirectangularReflectionMapping;
         const material = new THREE.MeshPhysicalMaterial({
@@ -378,12 +449,12 @@ export default class Game {
             ior: 2.33, // controls reflectiveness, value between 1 and 2.33
         })
         const planet = new THREE.Mesh(geometry, material);
-        planet.position.set(100, 100, 100);
+        planet.position.set(...PLANET_POSITION);
 
         const canvas2d = document.getElementById('game2d') as HTMLCanvasElement;
         const game2dTexture = new THREE.CanvasTexture(canvas2d);
 
-        const width = 16;
+        const width = 16 * 5;
         const height = width / canvas2d.width * canvas2d.height;
 
         const plane = new THREE.PlaneGeometry(width, height);
@@ -396,7 +467,7 @@ export default class Game {
         });
 
         const planeMesh = new THREE.Mesh(plane, planeMaterial);
-        planeMesh.position.set(100, 100, 100);
+        planeMesh.position.set(...PLANET_POSITION);
 
         this.scene.add(planet);
         this.scene.add(planeMesh);
@@ -416,15 +487,18 @@ export default class Game {
     }
 
     private moveBird(delta: number) {
-        this.birdModel?.position.set(this.bird.position.x, this.bird.position.y, this.bird.position.z);
-        // this.birdModel?.setRotationFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 0, 1), new THREE.Vector3(this.bird.getVelocity().x, this.bird.getVelocity().y, this.bird.getVelocity().z).normalize()));
+        this.birdModel?.position.set(this.bird!.position.x, this.bird!.position.y, this.bird!.position.z);
+        // this.birdModel?.setRotationFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 0, 1), new THREE.Vector3(this.bird!.velocity.x, this.bird!.velocity.y, this.bird!.velocity.z).normalize()));
 
         const unitForwards = new THREE.Vector3(0, 0, 1);
-        const unitVelocity = new THREE.Vector3(this.bird.velocity.x, this.bird.velocity.y, this.bird.velocity.z).multiplyScalar(3);
+        const unitVelocity = new THREE.Vector3(this.bird!.velocity.x, this.bird!.velocity.y, this.bird!.velocity.z).multiplyScalar(3);
         const averageVector = new THREE.Vector3().addVectors(unitForwards, unitVelocity).normalize();
         const targetQuaternion = new THREE.Quaternion().setFromUnitVectors(unitForwards, averageVector);
 
+        targetQuaternion.y += Math.PI / 2;
+
         this.birdModel?.quaternion.rotateTowards(targetQuaternion, delta * 10);
+        // if (this.birdModel?.rotation.y) this.birdModel.rotation.y += Math.PI;
 
         // Detect collision with floor
         // I'm just going to use constants for the floor's position... I can't do this anymore!
@@ -434,15 +508,15 @@ export default class Game {
         const floorRight = 8 * FLOOR_SCALE / 5;
 
         if (this.birdModel && this.birdModel?.position.y <= floorBottom) {
-            this.bird.position.y = floorBottom;
+            this.bird!.position.y = floorBottom;
         } else if (this.birdModel && this.birdModel?.position.y >= floorTop) {
-            this.bird.position.y = floorTop;
+            this.bird!.position.y = floorTop;
         } 
         
         if (this.birdModel && this.birdModel?.position.x <= floorLeft) {
-            this.bird.position.x = floorLeft;
+            this.bird!.position.x = floorLeft;
         } else if (this.birdModel && this.birdModel?.position.x >= floorRight) {
-            this.bird.position.x = floorRight;
+            this.bird!.position.x = floorRight;
         }
 
         // Detect collision with pipes
@@ -462,27 +536,31 @@ export default class Game {
             });
         }
 
-        if (this.bird.velocity.x > 0) {
-            this.bird.velocity.x -= 0.002;
-        } else if (this.bird.velocity.x < 0) {
-            this.bird.velocity.x += 0.002;
+        if (this.bird!.velocity.x > 0) {
+            this.bird!.velocity.x -= 0.002;
+        } else if (this.bird!.velocity.x < 0) {
+            this.bird!.velocity.x += 0.002;
         }
 
-        // this.camera.position.x = this.bird.position.x;
-        // this.camera.position.y = this.bird.position.y;
+        this.bird2dSprite!.position.set(this.bird2d!.position.x, this.bird2d!.position.y, this.bird2d!.position.z);
+        this.bird2dSprite!.material.rotation += 0.02 * delta * 60;
 
-        this.bird.move(delta);
+        // this.camera.position.x = this.bird!.position.x;
+        // this.camera.position.y = this.bird!.position.y;
+
+        this.bird!.move(delta);
+        this.bird2d!.move(delta);
     }
 
     private jump() {
-        this.bird.velocity.y = 0.1;
+        this.bird!.velocity.y = 0.1;
     }
 
     private moveLeft() {
-        this.bird.velocity.x = -0.1;
+        this.bird!.velocity.x = -0.1;
     }
 
     private moveRight() {
-        this.bird.velocity.x = 0.1;
+        this.bird!.velocity.x = 0.1;
     }
 }

@@ -9,3 +9,4 @@ Flappy Bird but in 3D.
 - Image by <a href="https://pixabay.com/users/myersalex216-4979749/?utm_source=link-attribution&utm_medium=referral&utm_campaign=image&utm_content=2638158">Alex Myers</a> from <a href="https://pixabay.com//?utm_source=link-attribution&utm_medium=referral&utm_campaign=image&utm_content=2638158">Pixabay</a>
 - https://sketchfab.com/3d-models/drone-concept-cde78a97ce3d4882b68463e4fb821d8b
 - "Sci-Fi Pipes Armored" (https://skfb.ly/oQqsS) by Random_CGI is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).
+- "Triangular Animated Portal" (https://skfb.ly/oLVDS) by st4ng is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).
