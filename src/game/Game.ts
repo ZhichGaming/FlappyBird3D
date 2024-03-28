@@ -5,6 +5,7 @@ import { UnrealBloomPass } from 'three/addons/postprocessing/UnrealBloomPass.js'
 import { EffectComposer } from 'three/addons/postprocessing/EffectComposer.js';
 import { RenderPass } from 'three/addons/postprocessing/RenderPass.js';
 import { OutputPass } from 'three/addons/postprocessing/OutputPass.js';
+import { GlitchPass } from 'three/addons/postprocessing/GlitchPass.js';
 import { ShaderPass } from 'three/examples/jsm/postprocessing/ShaderPass.js';
 import { fragmentShader } from '../shaders/FragmentShader';
 import { vertexShader } from '../shaders/VertexShader';
@@ -16,6 +17,8 @@ import Game2D from '../game2d/Game2D';
 
 const BLOOM_SCENE = 1;
 const FLOOR_SCALE = 5;
+
+const GLITCH_SCENE = 2;
 
 const PLANET_POSITION = [150, 100, 150] as const;
 const RELATIVE_PORTAL_POSITION = [-90, -35, -70] as const;
@@ -30,8 +33,10 @@ export default class Game {
     private loader: GLTFLoader;
     private controls: OrbitControls;
     private clock: THREE.Clock;
+    private frameCount = 0;
 
     private bloomPass: UnrealBloomPass;
+    private glitchPass: GlitchPass;
     private bloomComposer: EffectComposer;
     private mixPass: any;
     private bloomLayer: THREE.Layers;
@@ -44,6 +49,8 @@ export default class Game {
 
     bird2d?: Bird;
     private bird2dSprite?: THREE.Sprite;
+    private bird2dLightBall?: THREE.Mesh;
+    private transformationAnimationProgress = 0;
 
     pipes: Pipe[] = [];
     private pipeModel?: THREE.Object3D;
@@ -71,10 +78,10 @@ export default class Game {
         this.clock = new THREE.Clock();
         this.materials = [];
 
+        // const gui = new GUI();
+
         this.renderScene = new RenderPass(this.scene, this.camera);
         this.bloomPass = new UnrealBloomPass(new THREE.Vector2(window.innerWidth, window.innerHeight), 1, 0, 0.85);
-
-        // const gui = new GUI();
 
         this.bloomParams = {
             bloomStrength: this.bloomPass.strength,
@@ -87,11 +94,13 @@ export default class Game {
         this.bloomComposer.addPass(this.renderScene);
         this.bloomComposer.addPass(this.bloomPass);
         
+        this.glitchPass = new GlitchPass();
+        
         this.mixPass = new ShaderPass(
             new THREE.ShaderMaterial({
                 uniforms: {
                     baseTexture: { value: null },
-                    bloomTexture: { value: this.bloomComposer.renderTarget2.texture }
+                    bloomTexture: { value: this.bloomComposer.renderTarget2.texture },
                 },
                 vertexShader: vertexShader,
                 fragmentShader: fragmentShader,
@@ -105,6 +114,7 @@ export default class Game {
         this.finalComposer = new EffectComposer( this.renderer );
 
         this.finalComposer.addPass(this.renderScene);
+        // this.finalComposer.addPass(this.glitchPass);
         this.finalComposer.addPass(this.mixPass);
         this.finalComposer.addPass(this.outputPass);
 
@@ -127,9 +137,9 @@ export default class Game {
         this.loadFloor();
         this.loadPortal();
 
-        for (let i = 0; i < 10000; i++) {
-            this.spawnStar();
-        }
+        // for (let i = 0; i < 10000; i++) {
+        //     this.spawnStar();
+        // }
 
         this.spawnPlanet();
 
@@ -232,16 +242,26 @@ export default class Game {
 
         const map = new THREE.TextureLoader().load('src/assets/flappy-bird/sprites/yellowbird-downflap.png');
 
-        this.bird2d = new Bird(...(PLANET_POSITION.map((pos, index) => pos + RELATIVE_PORTAL_POSITION[index]) as [number, number, number]));
+        const birdPos = PLANET_POSITION.map((pos, index) => pos + RELATIVE_PORTAL_POSITION[index]) as [number, number, number];
+
+        this.bird2d = new Bird(...birdPos);
         this.bird2dSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: map, color: 0xffffff }));
         this.bird2dSprite.scale.set(3, 3, 3);
 
         const multiplier = 0.5;
         this.bird2d.velocity.x = 0.1 * multiplier;
-        this.bird2d.velocity.y = -0.05 * multiplier;
+        this.bird2d.velocity.y = 0.02 * multiplier;
         this.bird2d.velocity.z = -0.1 * multiplier;
 
         this.bird2d.acceleration.y = 0;
+
+        const lightBallGeometry = new THREE.SphereGeometry(5, 16, 16);
+        const lightBallMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xffffff, emissiveIntensity: 5 });
+        this.bird2dLightBall = new THREE.Mesh(lightBallGeometry, lightBallMaterial);
+        this.bird2dLightBall.position.set(...birdPos);
+        this.bird2dLightBall.scale.set(0, 0, 0);
+        this.bird2dLightBall.layers.enable(BLOOM_SCENE);
+        this.scene.add(this.bird2dLightBall);
 
         this.scene.add(this.bird2dSprite);
     }
@@ -387,6 +407,7 @@ export default class Game {
         this.scene.traverse(this.restoreMaterial.bind(this));
         this.finalComposer.render();
 
+        this.frameCount++;
         requestAnimationFrame(this.animate.bind(this));
     }
 
@@ -544,6 +565,12 @@ export default class Game {
 
         this.bird2dSprite!.position.set(this.bird2d!.position.x, this.bird2d!.position.y, this.bird2d!.position.z);
         this.bird2dSprite!.material.rotation += 0.02 * delta * 60;
+
+        const lightBallScale = Math.sin(Math.min(this.transformationAnimationProgress, Math.PI)) ;
+        this.bird2dLightBall!.position.set(this.bird2d!.position.x, this.bird2d!.position.y, this.bird2d!.position.z);
+        this.bird2dLightBall!.scale.set(lightBallScale, lightBallScale, lightBallScale);
+
+        this.transformationAnimationProgress += 0.01;
 
         // this.camera.position.x = this.bird!.position.x;
         // this.camera.position.y = this.bird!.position.y;
