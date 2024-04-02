@@ -242,7 +242,7 @@ export default class Game2D {
 
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
         // this.ctx.drawImage(this.background, 0, 0, this.canvas.width, this.canvas.height);
-        for (let i = 0; i < Math.ceil(this.canvas.width / this.background.width); i++) {
+        for (let i = 0; i < 6; i++) {
             this.ctx.drawImage(this.background, i * this.background.width, 0, this.background.width/this.background.height*this.canvas.height, this.canvas.height);
         }
 
