@@ -11,17 +11,25 @@ import { fragmentShader } from '../shaders/FragmentShader';
 import { vertexShader } from '../shaders/VertexShader';
 import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import GUI from 'lil-gui'; 
-import Bird from './Bird';
+import Bird, { BIRD_GRAVITY } from './Bird';
 import Pipe from './Pipe';
-import Game2D from '../game2d/Game2D';
 
 const BLOOM_SCENE = 1;
 const FLOOR_SCALE = 5;
 
 const GLITCH_SCENE = 2;
 
-const PLANET_POSITION = [150, 100, 150] as const;
+const PLANET_POSITION = [90, 35, 220] as const;
 const RELATIVE_PORTAL_POSITION = [-90, -35, -70] as const;
+
+export enum GameState {
+    DESTROY_PLANET,
+    ARRIVAL,
+    FLAPPY,
+    FIX_PLANET,
+    DEPARTURE,
+}
+
 
 export default class Game {
     private scene: THREE.Scene;
@@ -42,6 +50,8 @@ export default class Game {
     private bloomLayer: THREE.Layers;
     private materials: any;
     private bloomParams: any;
+
+    gameState: GameState = GameState.DESTROY_PLANET;
     
     bird?: Bird;
     private birdModel?: THREE.Object3D;
@@ -50,7 +60,7 @@ export default class Game {
     bird2d?: Bird;
     private bird2dSprite?: THREE.Sprite;
     private bird2dLightBall?: THREE.Mesh;
-    private transformationAnimationProgress = 0;
+    private transformationAnimationProgress = -1;
 
     pipes: Pipe[] = [];
     private pipeModel?: THREE.Object3D;
@@ -63,6 +73,8 @@ export default class Game {
 
     private planeMesh?: THREE.Mesh<THREE.PlaneGeometry, THREE.MeshBasicMaterial, THREE.Object3DEventMap>;
     private planetMesh?: THREE.Mesh;
+    private laserMesh?: THREE.Mesh;
+    private laserDirection?: THREE.Vector3;
 
     private portalModel?: THREE.Object3D;
     private portalMixer?: THREE.AnimationMixer;
@@ -142,14 +154,15 @@ export default class Game {
         // }
 
         this.spawnPlanet();
+        this.spawnLaser();
 
-        this.camera.position.x = 60;
-        this.camera.position.y = 55;
-        this.camera.position.z = 50;
+        const absolutePortalPosition = PLANET_POSITION.map((pos, index) => pos + RELATIVE_PORTAL_POSITION[index]) as [number, number, number];
+        this.camera.position.set(...absolutePortalPosition);
+        // this.camera.position.x += 50;
+        // this.camera.position.z -= 30;
 
-        const cameraOrientation = new THREE.Vector3(150, 100, 150);
-        this.camera.lookAt(cameraOrientation);
-        this.controls.target = cameraOrientation;
+        this.camera.lookAt(...PLANET_POSITION);
+        this.controls.target = new THREE.Vector3(...PLANET_POSITION);
 
         // Resize canvas on window resize
         window.addEventListener('resize', () => {
@@ -161,9 +174,6 @@ export default class Game {
             this.camera.aspect = window.innerWidth / window.innerHeight;
             this.camera.updateProjectionMatrix();
         });
-
-        // TODO: Rewrite in relation to frame rate
-        setInterval(this.spawnPipe.bind(this), 2000);
 
         document.addEventListener('keydown', (event) => {
             if (event.key === ' ') {
@@ -239,31 +249,6 @@ export default class Game {
         }, undefined, (error) => {
             console.error(error);
         });
-
-        const map = new THREE.TextureLoader().load('src/assets/flappy-bird/sprites/yellowbird-downflap.png');
-
-        const birdPos = PLANET_POSITION.map((pos, index) => pos + RELATIVE_PORTAL_POSITION[index]) as [number, number, number];
-
-        this.bird2d = new Bird(...birdPos);
-        this.bird2dSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: map, color: 0xffffff }));
-        this.bird2dSprite.scale.set(3, 3, 3);
-
-        const multiplier = 0.5;
-        this.bird2d.velocity.x = 0.1 * multiplier;
-        this.bird2d.velocity.y = 0.02 * multiplier;
-        this.bird2d.velocity.z = -0.1 * multiplier;
-
-        this.bird2d.acceleration.y = 0;
-
-        const lightBallGeometry = new THREE.SphereGeometry(5, 16, 16);
-        const lightBallMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xffffff, emissiveIntensity: 5 });
-        this.bird2dLightBall = new THREE.Mesh(lightBallGeometry, lightBallMaterial);
-        this.bird2dLightBall.position.set(...birdPos);
-        this.bird2dLightBall.scale.set(0, 0, 0);
-        this.bird2dLightBall.layers.enable(BLOOM_SCENE);
-        this.scene.add(this.bird2dLightBall);
-
-        this.scene.add(this.bird2dSprite);
     }
 
     private loadPipe() {
@@ -363,13 +348,6 @@ export default class Game {
             this.portalMixer = new THREE.AnimationMixer( gltf.scene );
             let action = this.portalMixer.clipAction( gltf.animations[0] );
             action.play();
-
-            this.scene.add(gltf.scene);
-
-            this.portalModel.scale.set(5, 5, 5);
-            this.portalModel.position.set(PLANET_POSITION[0] - 90, PLANET_POSITION[1] - 35, PLANET_POSITION[2] - 70);
-            this.portalModel.rotateX(-Math.PI / 2);
-            this.portalModel.rotateZ(-Math.PI / 4);
         }, undefined, (error) => {
             console.error(error);
         });
@@ -380,16 +358,6 @@ export default class Game {
 
         // Bird animation
         if ( this.birdMixer ) this.birdMixer.update( delta );
-        this.moveBird(delta);
-
-        // Moving pipes
-        this.pipes.forEach((pipe, _) => {
-            const pipeModel = this.pipeModels[pipe.id];
-
-            if (pipeModel) {
-                this.movePipe(delta, pipe, pipeModel);
-            }
-        });
 
         // Floor animation
         if ( this.floorMixer ) this.floorMixer.update( delta * 2 );
@@ -399,6 +367,23 @@ export default class Game {
 
         this.planeMesh?.rotateX(delta / 10);
         this.planeMesh?.rotateY(delta / 10);
+
+        if (this.gameState === GameState.DESTROY_PLANET) {
+            this.moveLaser(delta);
+        }
+
+        if (this.gameState > 0) {
+            this.moveBird(delta);
+
+            // Moving pipes
+            this.pipes.forEach((pipe, _) => {
+                const pipeModel = this.pipeModels[pipe.id];
+
+                if (pipeModel) {
+                    this.movePipe(delta, pipe, pipeModel);
+                }
+            });
+        }
 
         this.controls.update();
 
@@ -439,6 +424,22 @@ export default class Game {
                 this.pipes.splice(index, 1);
             }
         }, 10000);
+    }
+
+    private spawnLaser() {
+        const geometry = new THREE.CylinderGeometry(1, 1, 1000, 32);
+        const material = new THREE.MeshStandardMaterial({ color: 0xff0000, emissiveIntensity: 5, emissive: 0xff0000 });
+
+        const laser = new THREE.Mesh(geometry, material);
+        laser.position.set(-300, 0, -300);
+
+        laser.layers.enable(BLOOM_SCENE);
+
+        this.laserDirection = new THREE.Vector3(...PLANET_POSITION).sub(laser.position);
+        laser.quaternion.setFromUnitVectors(new THREE.Vector3(0, 1, 0), this.laserDirection.clone().normalize());
+
+        this.laserMesh = laser;
+        this.scene.add(laser);
     }
 
     private spawnStar() {
@@ -497,6 +498,44 @@ export default class Game {
         this.planetMesh = planet;
     }
 
+    private spawnPortal() {
+        if (this.portalModel) {
+            this.portalModel.scale.set(5, 5, 5);
+            this.portalModel.position.set(PLANET_POSITION[0] - 90, PLANET_POSITION[1] - 35, PLANET_POSITION[2] - 70);
+            this.portalModel.rotateX(-Math.PI / 2);
+            this.portalModel.rotateZ(-Math.PI / 4);
+
+            this.scene.add(this.portalModel);
+        }
+    }
+
+    private spawnBird2D() {
+        const map = new THREE.TextureLoader().load('src/assets/flappy-bird/sprites/yellowbird-downflap.png');
+
+        const birdPos = PLANET_POSITION.map((pos, index) => pos + RELATIVE_PORTAL_POSITION[index]) as [number, number, number];
+
+        this.bird2d = new Bird(...birdPos);
+        this.bird2dSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: map, color: 0xffffff }));
+        this.bird2dSprite.scale.set(3, 3, 3);
+
+        const multiplier = 0.5;
+        this.bird2d.velocity.x = 0;
+        this.bird2d.velocity.y = 0;
+        this.bird2d.velocity.z = -0.1 * multiplier;
+
+        this.bird2d.acceleration.y = 0;
+
+        const lightBallGeometry = new THREE.SphereGeometry(5, 16, 16);
+        const lightBallMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xffffff, emissiveIntensity: 5 });
+        this.bird2dLightBall = new THREE.Mesh(lightBallGeometry, lightBallMaterial);
+        this.bird2dLightBall.position.set(...birdPos);
+        this.bird2dLightBall.scale.set(0, 0, 0);
+        this.bird2dLightBall.layers.enable(BLOOM_SCENE);
+        this.scene.add(this.bird2dLightBall);
+
+        this.scene.add(this.bird2dSprite);
+    }
+
     private movePipe(delta: number, pipe: Pipe, pipeModel: THREE.Object3D) {
         if (pipe.position.y <= -5) {
             pipe.position.y = -5;
@@ -507,6 +546,7 @@ export default class Game {
         pipe.move(delta);
     }
 
+    private replacedBird = false;
     private moveBird(delta: number) {
         this.birdModel?.position.set(this.bird!.position.x, this.bird!.position.y, this.bird!.position.z);
         // this.birdModel?.setRotationFromQuaternion(new THREE.Quaternion().setFromUnitVectors(new THREE.Vector3(0, 0, 1), new THREE.Vector3(this.bird!.velocity.x, this.bird!.velocity.y, this.bird!.velocity.z).normalize()));
@@ -521,40 +561,42 @@ export default class Game {
         this.birdModel?.quaternion.rotateTowards(targetQuaternion, delta * 10);
         // if (this.birdModel?.rotation.y) this.birdModel.rotation.y += Math.PI;
 
-        // Detect collision with floor
-        // I'm just going to use constants for the floor's position... I can't do this anymore!
-        const floorBottom = -5 * FLOOR_SCALE / 5;
-        const floorTop = 3 * FLOOR_SCALE / 5;
-        const floorLeft = -8 * FLOOR_SCALE / 5;
-        const floorRight = 8 * FLOOR_SCALE / 5;
+        if (this.gameState === GameState.FLAPPY) {
+            // Detect collision with floor
+            // I'm just going to use constants for the floor's position... I can't do this anymore!
+            const floorBottom = -5 * FLOOR_SCALE / 5;
+            const floorTop = 3 * FLOOR_SCALE / 5;
+            const floorLeft = -8 * FLOOR_SCALE / 5;
+            const floorRight = 8 * FLOOR_SCALE / 5;
 
-        if (this.birdModel && this.birdModel?.position.y <= floorBottom) {
-            this.bird!.position.y = floorBottom;
-        } else if (this.birdModel && this.birdModel?.position.y >= floorTop) {
-            this.bird!.position.y = floorTop;
-        } 
-        
-        if (this.birdModel && this.birdModel?.position.x <= floorLeft) {
-            this.bird!.position.x = floorLeft;
-        } else if (this.birdModel && this.birdModel?.position.x >= floorRight) {
-            this.bird!.position.x = floorRight;
-        }
+            if (this.birdModel && this.birdModel?.position.y <= floorBottom) {
+                this.bird!.position.y = floorBottom;
+            } else if (this.birdModel && this.birdModel?.position.y >= floorTop) {
+                this.bird!.position.y = floorTop;
+            } 
+            
+            if (this.birdModel && this.birdModel?.position.x <= floorLeft) {
+                this.bird!.position.x = floorLeft;
+            } else if (this.birdModel && this.birdModel?.position.x >= floorRight) {
+                this.bird!.position.x = floorRight;
+            }
 
-        // Detect collision with pipes
-        if (this.birdModel) {
-            const birdBox = new THREE.Box3().setFromObject(this.birdModel);
+            // Detect collision with pipes
+            if (this.birdModel) {
+                const birdBox = new THREE.Box3().setFromObject(this.birdModel);
 
-            this.pipes.forEach((pipe, _) => {
-                const pipeModel = this.pipeModels[pipe.id];
+                this.pipes.forEach((pipe, _) => {
+                    const pipeModel = this.pipeModels[pipe.id];
 
-                if (pipeModel) {
-                    const pipeBox = new THREE.Box3().setFromObject(pipeModel);
+                    if (pipeModel) {
+                        const pipeBox = new THREE.Box3().setFromObject(pipeModel);
 
-                    if (birdBox.intersectsBox(pipeBox)) {
-                        console.log('collision!');
+                        if (birdBox.intersectsBox(pipeBox)) {
+                            console.log('collision!');
+                        }
                     }
-                }
-            });
+                });
+            }
         }
 
         if (this.bird!.velocity.x > 0) {
@@ -563,20 +605,75 @@ export default class Game {
             this.bird!.velocity.x += 0.002;
         }
 
-        this.bird2dSprite!.position.set(this.bird2d!.position.x, this.bird2d!.position.y, this.bird2d!.position.z);
-        this.bird2dSprite!.material.rotation += 0.02 * delta * 60;
+        if (!this.replacedBird && this.transformationAnimationProgress >= Math.PI / 2) {
+            if (this.bird2dSprite) this.scene.remove(this.bird2dSprite);
+            
+            this.bird = this.bird2d!;
+            this.bird.acceleration.y = BIRD_GRAVITY;
+            
+            this.replacedBird = true;
+        } else if (this.transformationAnimationProgress <= Math.PI && this.transformationAnimationProgress >= 0) {
+            const lightBallScale = Math.sin(Math.min(this.transformationAnimationProgress, Math.PI)) ;
+            this.bird2dLightBall!.position.set(this.bird2d!.position.x, this.bird2d!.position.y, this.bird2d!.position.z);
+            this.bird2dLightBall!.scale.set(lightBallScale, lightBallScale, lightBallScale);
+        }
 
-        const lightBallScale = Math.sin(Math.min(this.transformationAnimationProgress, Math.PI)) ;
-        this.bird2dLightBall!.position.set(this.bird2d!.position.x, this.bird2d!.position.y, this.bird2d!.position.z);
-        this.bird2dLightBall!.scale.set(lightBallScale, lightBallScale, lightBallScale);
+        if (!this.replacedBird) { 
+            this.bird2dSprite!.position.set(this.bird2d!.position.x, this.bird2d!.position.y, this.bird2d!.position.z);
+            this.bird2dSprite!.material.rotation += 0.02 * delta * 60;
+        }
 
-        this.transformationAnimationProgress += 0.01;
+        if (this.transformationAnimationProgress < Math.PI) {
+            this.transformationAnimationProgress += 0.01;
+        } else {
+            this.transformationAnimationProgress = Math.PI;
+
+            if (this.gameState === GameState.ARRIVAL) {
+                this.gameState = GameState.FLAPPY;
+
+                // TODO: Rewrite in relation to frame rate
+                if (this.gameState === GameState.FLAPPY) setInterval(this.spawnPipe.bind(this), 2000);
+            }
+        }
+
+        if (this.gameState === GameState.FLAPPY) {
+            this.camera.position.x = this.bird!.position.x;
+            this.camera.position.y = this.bird!.position.y + 5;
+            this.camera.position.z = this.bird!.position.z + 10;
+
+            this.camera.lookAt(this.bird!.position.x, this.bird!.position.y, this.bird!.position.z);
+            this.controls.target = new THREE.Vector3(this.bird!.position.x, this.bird!.position.y, this.bird!.position.z);
+        }
 
         // this.camera.position.x = this.bird!.position.x;
         // this.camera.position.y = this.bird!.position.y;
 
         this.bird!.move(delta);
-        this.bird2d!.move(delta);
+
+        if (!this.replacedBird) this.bird2d!.move(delta);
+    }
+
+    private laserAnimationProgress = -1.5;
+    private moveLaser(delta: number) {
+        if (!this.laserMesh) return;
+
+        if (this.laserAnimationProgress < 0) {
+            this.laserMesh.position.add(this.laserDirection!.clone().normalize().multiplyScalar(5));
+        } else if (this.laserAnimationProgress < 1) {
+            const dissapearScale = Math.max(0, 1 - this.laserAnimationProgress);
+            this.laserMesh.scale.set(dissapearScale, dissapearScale, dissapearScale);
+        }
+
+        (this.laserMesh.material as THREE.MeshStandardMaterial).emissiveIntensity = Math.abs(2 * Math.sin(this.laserAnimationProgress * Math.PI)) + 3;
+        this.laserAnimationProgress += 0.01;
+
+        if (this.laserAnimationProgress >= 1) {
+            this.laserAnimationProgress = 1;
+
+            this.gameState = GameState.ARRIVAL;
+            this.spawnPortal();
+            this.spawnBird2D();
+        }
     }
 
     private jump() {
