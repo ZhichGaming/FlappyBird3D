@@ -158,8 +158,8 @@ export default class Game {
 
         const absolutePortalPosition = PLANET_POSITION.map((pos, index) => pos + RELATIVE_PORTAL_POSITION[index]) as [number, number, number];
         this.camera.position.set(...absolutePortalPosition);
-        // this.camera.position.x += 50;
-        // this.camera.position.z -= 30;
+        this.camera.position.x -= 20;
+        this.camera.position.z -= 40;
 
         this.camera.lookAt(...PLANET_POSITION);
         this.controls.target = new THREE.Vector3(...PLANET_POSITION);
@@ -372,6 +372,23 @@ export default class Game {
             this.moveLaser(delta);
         }
 
+        const finalPortalScale = 50;
+
+        if (this.gameState === GameState.ARRIVAL) {
+            if (this.portalAnimationProgress >= 1) {
+                this.portalAnimationProgress = 1;
+            }
+
+            if (this.portalAnimationProgress < -0.8 || this.portalAnimationProgress >= 0.8) {
+                const portalScale = Math.max(0, finalPortalScale - Math.abs(this.portalAnimationProgress) * finalPortalScale);
+                console.log(portalScale);
+                this.portalAnimationProgress += 0.01;
+                this.portalModel?.scale.set(portalScale, portalScale, portalScale);
+            } else {
+                this.portalAnimationProgress += 0.01;
+            }
+        }
+        
         if (this.gameState > 0) {
             this.moveBird(delta);
 
@@ -498,9 +515,10 @@ export default class Game {
         this.planetMesh = planet;
     }
 
+    private portalAnimationProgress = -1;
     private spawnPortal() {
         if (this.portalModel) {
-            this.portalModel.scale.set(5, 5, 5);
+            this.portalModel.scale.set(0, 0, 0);
             this.portalModel.position.set(PLANET_POSITION[0] - 90, PLANET_POSITION[1] - 35, PLANET_POSITION[2] - 70);
             this.portalModel.rotateX(-Math.PI / 2);
             this.portalModel.rotateZ(-Math.PI / 4);
@@ -518,12 +536,13 @@ export default class Game {
         this.bird2dSprite = new THREE.Sprite(new THREE.SpriteMaterial({ map: map, color: 0xffffff }));
         this.bird2dSprite.scale.set(3, 3, 3);
 
-        const multiplier = 0.5;
+        const multiplier = 3;
         this.bird2d.velocity.x = 0;
         this.bird2d.velocity.y = 0;
         this.bird2d.velocity.z = -0.1 * multiplier;
 
         this.bird2d.acceleration.y = 0;
+        // this.bird2d.acceleration.z = 0.01;
 
         const lightBallGeometry = new THREE.SphereGeometry(5, 16, 16);
         const lightBallMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xffffff, emissiveIntensity: 5 });
@@ -605,6 +624,20 @@ export default class Game {
             this.bird!.velocity.x += 0.002;
         }
 
+        if (this.gameState === GameState.ARRIVAL) {
+            switch (this.replacedBird) {
+                case false:
+                    this.camera.lookAt(this.bird2d!.position.x, this.bird2d!.position.y, this.bird2d!.position.z);
+                    this.controls.target = new THREE.Vector3(this.bird2d!.position.x, this.bird2d!.position.y, this.bird2d!.position.z);
+                    break;
+                case true:
+                    this.camera.lookAt(this.bird2d!.position.x, this.bird2d!.position.y, this.bird2d!.position.z);
+                    this.controls.target = new THREE.Vector3(this.bird2d!.position.x, this.bird2d!.position.y, this.bird2d!.position.z);
+                    break;
+            }
+            
+        }
+
         if (!this.replacedBird && this.transformationAnimationProgress >= Math.PI / 2) {
             if (this.bird2dSprite) this.scene.remove(this.bird2dSprite);
             
@@ -629,6 +662,8 @@ export default class Game {
             this.transformationAnimationProgress = Math.PI;
 
             if (this.gameState === GameState.ARRIVAL) {
+                this.bird!.velocity.z = -0.05;
+
                 this.gameState = GameState.FLAPPY;
 
                 // TODO: Rewrite in relation to frame rate
@@ -638,15 +673,15 @@ export default class Game {
 
         if (this.gameState === GameState.FLAPPY) {
             this.camera.position.x = this.bird!.position.x;
-            this.camera.position.y = this.bird!.position.y + 5;
+            this.camera.position.y = this.bird!.position.y;
             this.camera.position.z = this.bird!.position.z + 10;
 
-            this.camera.lookAt(this.bird!.position.x, this.bird!.position.y, this.bird!.position.z);
-            this.controls.target = new THREE.Vector3(this.bird!.position.x, this.bird!.position.y, this.bird!.position.z);
+            // this.camera.lookAt(this.bird!.position.x, this.bird!.position.y, this.bird!.position.z);
+            // this.controls.target = new THREE.Vector3(this.bird!.position.x, this.bird!.position.y, this.bird!.position.z);
+            this.camera.lookAt(0, 0, this.bird!.position.z);
+            this.controls.target = new THREE.Vector3(0, 0, this.bird!.position.z);
         }
 
-        // this.camera.position.x = this.bird!.position.x;
-        // this.camera.position.y = this.bird!.position.y;
 
         this.bird!.move(delta);
 
