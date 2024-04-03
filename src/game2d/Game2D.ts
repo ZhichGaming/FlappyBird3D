@@ -37,7 +37,7 @@ export const LEVELS = [
     {
         requiredScore: 20,
         speed: 2,
-        pipeSpacing: 100,
+        pipeSpacing: 150,
         pipeInterval: 50,
         movingPipes: true,
         lasers: false,
@@ -86,7 +86,7 @@ export default class Game2D {
     private stopped = false;
     private gameloopId: number = 0;
 
-    score = 49;
+    score = 0;
     stage: GameState = GameState.NORMAL_PIPES;
 
     constructor(canvas: HTMLCanvasElement) {
