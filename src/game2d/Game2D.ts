@@ -209,7 +209,7 @@ export default class Game2D {
 
             if (this.getLevel().movingPipes) {
                 const direction = pipe.position.y + pipe.spacing / 2 > window.innerHeight / 4 ? 1 : -1;
-                pipe.position.y += Math.sin(this.frameCount / 10) * 5 * direction;
+                pipe.position.y += Math.sin(this.frameCount / 10) * 3 * direction;
             }
 
             if (pipe.position.x + pipe.width < this.bird.position.x && !pipe.passed) {
