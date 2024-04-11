@@ -13,7 +13,7 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import GUI from 'lil-gui'; 
 import Bird, { BIRD_GRAVITY } from './Bird';
 import Pipe from './Pipe';
-import { game2d, resetGame2D } from '../App';
+import { game2d } from '../App';
 
 const BLOOM_SCENE = 1;
 const FLOOR_SCALE = 5;
@@ -162,6 +162,12 @@ export default class Game {
 
         this.spawnPlanet();
         this.spawnLaser();
+
+        // helper to curve
+        // const pathGeometry = new THREE.BufferGeometry().setFromPoints(this.fixPlanetPath.getPoints(50));
+        // const pathMaterial = new THREE.LineBasicMaterial({ color: 0xff0000 });
+        // const pathCurve = new THREE.Line(pathGeometry, pathMaterial);
+        // this.scene.add(pathCurve);
 
         const absolutePortalPosition = PLANET_POSITION.map((pos, index) => pos + RELATIVE_PORTAL_POSITION[index]) as [number, number, number];
         this.camera.position.set(...absolutePortalPosition);
@@ -387,6 +393,7 @@ export default class Game {
 
     private fixPlanetPoints = [
         new THREE.Vector3(0, 7, 45),
+        new THREE.Vector3(10, 25, 35),
         new THREE.Vector3(...PLANET_POSITION),
     ]
     private fixPlanetPath = new THREE.CatmullRomCurve3(this.fixPlanetPoints);
