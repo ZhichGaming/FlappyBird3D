@@ -13,6 +13,7 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import GUI from 'lil-gui'; 
 import Bird, { BIRD_GRAVITY } from './Bird';
 import Pipe from './Pipe';
+import { game2d, resetGame2D } from '../App';
 
 const BLOOM_SCENE = 1;
 const FLOOR_SCALE = 5;
@@ -52,6 +53,7 @@ export default class Game {
     private bloomParams: any;
 
     gameState: GameState = GameState.DESTROY_PLANET;
+    stopped = false;
     
     bird?: Bird;
     private birdModel?: THREE.Object3D;
@@ -76,8 +78,12 @@ export default class Game {
     private laserMesh?: THREE.Mesh;
     private laserDirection?: THREE.Vector3;
 
+    private crystalModel?: THREE.Object3D;
+    private crystalY = 0;
+
     private portalModel?: THREE.Object3D;
     private portalMixer?: THREE.AnimationMixer;
+    private portalAnimationProgress = -1;
 
     constructor() {
         this.scene = new THREE.Scene();
@@ -148,6 +154,7 @@ export default class Game {
         this.loadPipe();
         this.loadFloor();
         this.loadPortal();
+        this.loadCrystal();
 
         // for (let i = 0; i < 10000; i++) {
         //     this.spawnStar();
@@ -208,6 +215,11 @@ export default class Game {
         this.animate();
 
         this.planeMesh!.material.map!.needsUpdate = true;
+    }
+
+    public stop() {
+        this.renderer.dispose();
+        this.stopped = true;
     }
 
     private loadSkybox() {
@@ -353,6 +365,34 @@ export default class Game {
         });
     }
 
+    private loadCrystal() {
+        this.loader.load('src/assets/crystal_kyber/scene.gltf', (gltf) => {
+            this.crystalModel = gltf.scene;
+
+            this.crystalModel?.traverse((child) => {
+                if (child instanceof THREE.Mesh) {
+                    child.material.emissiveIntensity = 5;
+                    child.layers.enable(BLOOM_SCENE);
+                }
+            });
+
+            this.crystalModel.scale.set(10, 10, 10);
+            this.crystalModel.position.set(0, 0, -45);
+
+            this.scene.add(gltf.scene);
+        }, undefined, (error) => {
+            console.error(error);
+        });
+    }
+
+    private fixPlanetPoints = [
+        new THREE.Vector3(0, 7, 45),
+        new THREE.Vector3(...PLANET_POSITION),
+    ]
+    private fixPlanetPath = new THREE.CatmullRomCurve3(this.fixPlanetPoints);
+    private fixPlanetProgress = 0;
+    private departureProgress = 0;
+
     private animate() {
         const delta = this.clock.getDelta();
 
@@ -365,11 +405,57 @@ export default class Game {
         // Portal animation
         if ( this.portalMixer ) this.portalMixer.update( delta );
 
+        // Crystal animation
+        this.crystalModel?.rotateY(delta);
+        this.crystalModel?.position.setY(this.crystalY + 0.5 * Math.sin(this.frameCount / 20));
+
         this.planeMesh?.rotateX(delta / 10);
         this.planeMesh?.rotateY(delta / 10);
 
         if (this.gameState === GameState.DESTROY_PLANET) {
             this.moveLaser(delta);
+        }
+
+        if (this.gameState === GameState.FIX_PLANET) {
+            if (this.fixPlanetProgress < 1) {
+                const point = this.fixPlanetPath.getPointAt(this.fixPlanetProgress);
+
+                this.bird!.position.set(point.x, point.y, point.z);
+                this.crystalModel?.position.set(point.x, point.y, point.z);
+                this.crystalY = point.y;
+
+                // this.camera.position.set(point.x, point.y + 5, point.z + 5);
+                this.camera.lookAt(...point.toArray());
+                this.controls.target = new THREE.Vector3(point.x, point.y, point.z);
+
+                // fixed camera distance to crystal
+                const newPos = point.clone().subScalar(1);
+                this.camera.position.lerp(newPos, 0.01);
+
+                this.fixPlanetProgress += 0.005;
+
+            } else {
+                this.gameState = GameState.DEPARTURE;
+            }
+        }
+
+        if (this.gameState === GameState.DEPARTURE) {
+            if (this.departureProgress < 1) {
+                (this.planetMesh!.material as THREE.MeshPhysicalMaterial).metalness = 0.5 * this.departureProgress;
+                (this.planetMesh!.material as THREE.MeshPhysicalMaterial).roughness = 1 - this.departureProgress;
+
+                this.departureProgress += 0.01;
+            } else {
+                this.stop();
+
+                setTimeout(() => {
+                    game2d.reset();
+                    game2d.start();
+                }, 1000);
+
+                document.getElementById('canvas')!.style.zIndex = '-1';
+                document.getElementById('game2d')!.style.zIndex = '1';
+            }
         }
 
         const finalPortalScale = 50;
@@ -381,7 +467,7 @@ export default class Game {
 
             if (this.portalAnimationProgress < -0.8 || this.portalAnimationProgress >= 0.8) {
                 const portalScale = Math.max(0, finalPortalScale - Math.abs(this.portalAnimationProgress) * finalPortalScale);
-                console.log(portalScale);
+
                 this.portalAnimationProgress += 0.01;
                 this.portalModel?.scale.set(portalScale, portalScale, portalScale);
             } else {
@@ -410,7 +496,8 @@ export default class Game {
         this.finalComposer.render();
 
         this.frameCount++;
-        requestAnimationFrame(this.animate.bind(this));
+
+        if (!this.stopped) requestAnimationFrame(this.animate.bind(this));
     }
 
     private spawnPipe() {
@@ -515,7 +602,6 @@ export default class Game {
         this.planetMesh = planet;
     }
 
-    private portalAnimationProgress = -1;
     private spawnPortal() {
         if (this.portalModel) {
             this.portalModel.scale.set(0, 0, 0);
@@ -616,12 +702,12 @@ export default class Game {
                     }
                 });
             }
-        }
 
-        if (this.bird!.velocity.x > 0) {
-            this.bird!.velocity.x -= 0.002;
-        } else if (this.bird!.velocity.x < 0) {
-            this.bird!.velocity.x += 0.002;
+            if (this.bird!.velocity.x > 0) {
+                this.bird!.velocity.x -= 0.002;
+            } else if (this.bird!.velocity.x < 0) {
+                this.bird!.velocity.x += 0.002;
+            }
         }
 
         if (this.gameState === GameState.ARRIVAL) {
@@ -635,7 +721,6 @@ export default class Game {
                     this.controls.target = new THREE.Vector3(this.bird2d!.position.x, this.bird2d!.position.y, this.bird2d!.position.z);
                     break;
             }
-            
         }
 
         if (!this.replacedBird && this.transformationAnimationProgress >= Math.PI / 2) {
@@ -680,8 +765,15 @@ export default class Game {
             // this.controls.target = new THREE.Vector3(this.bird!.position.x, this.bird!.position.y, this.bird!.position.z);
             this.camera.lookAt(0, 0, this.bird!.position.z);
             this.controls.target = new THREE.Vector3(0, 0, this.bird!.position.z);
-        }
 
+            if (this.bird!.position.z <= -45) {
+                this.gameState = GameState.FIX_PLANET;
+                this.bird!.velocity.y = 0;
+                this.bird!.velocity.z = 0;
+
+                this.bird!.acceleration.y = 0;
+            }
+        }
 
         this.bird!.move(delta);
 

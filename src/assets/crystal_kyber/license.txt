@@ -1,0 +1,11 @@
+Model Information:
+* title:	Crystal Kyber
+* source:	https://sketchfab.com/3d-models/crystal-kyber-1d769339a8cc45fda2ba6b31ce91160f
+* author:	Ian Diaz (https://sketchfab.com/Dyckzu)
+
+Model License:
+* license type:	CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)
+* requirements:	Author must be credited. Commercial use is allowed.
+
+If you use this 3D model in your project be sure to copy paste this credit wherever you share it:
+This work is based on "Crystal Kyber" (https://sketchfab.com/3d-models/crystal-kyber-1d769339a8cc45fda2ba6b31ce91160f) by Ian Diaz (https://sketchfab.com/Dyckzu) licensed under CC-BY-4.0 (http://creativecommons.org/licenses/by/4.0/)

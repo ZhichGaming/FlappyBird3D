@@ -10,3 +10,4 @@ Flappy Bird but in 3D.
 - https://sketchfab.com/3d-models/drone-concept-cde78a97ce3d4882b68463e4fb821d8b
 - "Sci-Fi Pipes Armored" (https://skfb.ly/oQqsS) by Random_CGI is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).
 - "Triangular Animated Portal" (https://skfb.ly/oLVDS) by st4ng is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).
+- "Crystal Kyber" (https://skfb.ly/6RAGY) by Ian Diaz is licensed under Creative Commons Attribution (http://creativecommons.org/licenses/by/4.0/).
