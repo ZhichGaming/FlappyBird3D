@@ -1,12 +1,14 @@
+"use client";
+
 import { useEffect } from "react";
-import "./styles/App.css";
+import "./styles/page.css"
 import Game from "./game/Game";
 import Game2D from "./game2d/Game2D";
 
 export let game: Game;
 export let game2d: Game2D;
 
-function App() {
+export default function Home() {
   useEffect(() => {
     game = new Game();
     // game.start();
@@ -21,5 +23,3 @@ function App() {
     </div>
   )
 }
-
-export default App;

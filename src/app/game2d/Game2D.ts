@@ -2,7 +2,7 @@ import { Vector2 } from "three";
 import Bird from "../game/Bird";
 import Pipe2D from "./Pipe2D";
 import Laser, { LASER_LEN, LASER_WIDTH, LaserColor } from "./Laser";
-import { game } from "../App";
+import { game } from "../page";
 
 export const BIRD_WIDTH = 34 * 2;
 export const BIRD_HEIGHT = 24 * 2;
@@ -96,9 +96,9 @@ export default class Game2D {
         this.canvas.width = window.innerWidth;
         this.canvas.height = window.innerHeight;
 
-        // this.canvas.style.backgroundImage = 'url("src/assets/flappy-bird/sprites/background-day.png")';
+        // this.canvas.style.backgroundImage = 'url("../assets/flappy-bird/sprites/background-day.png")';
         this.background = new Image();
-        this.background.src = 'src/assets/flappy-bird/sprites/background-day.png';
+        this.background.src = '/assets/flappy-bird/sprites/background-day.png';
 
         this.bird = new Bird(BIRD_X, 0, 0);
         this.bird.acceleration.y = BIRD_GRAVITY;
@@ -301,7 +301,7 @@ export default class Game2D {
             'upflap',
         ];
         
-        birdImage.src = `src/assets/flappy-bird/sprites/yellowbird-${birdImageNames[birdState]}.png`;
+        birdImage.src = `/assets/flappy-bird/sprites/yellowbird-${birdImageNames[birdState]}.png`;
 
         let sourceWidth = birdImage.width;
         let sourceHeight = birdImage.height;
@@ -326,7 +326,7 @@ export default class Game2D {
     private renderPipes() {
         this.pipes.forEach((pipe) => {
             const pipeImage = new Image();
-            pipeImage.src = `src/assets/flappy-bird/sprites/pipe-${this.getLevel().movingPipes ? "red" : "green"}.png`;
+            pipeImage.src = `/assets/flappy-bird/sprites/pipe-${this.getLevel().movingPipes ? "red" : "green"}.png`;
 
             this.ctx.save();
             this.ctx.scale(1, -1);
@@ -341,7 +341,7 @@ export default class Game2D {
                 }
 
                 const portalImage = new Image();
-                portalImage.src = 'src/assets/portal.png';
+                portalImage.src = '/assets/portal.png';
 
                 const portalWidth = 498;
                 const portalHeight = 498;
@@ -361,7 +361,7 @@ export default class Game2D {
 
     private renderGround() {
         const groundImage = new Image();
-        groundImage.src = 'src/assets/flappy-bird/sprites/base.png';
+        groundImage.src = '/assets/flappy-bird/sprites/base.png';
 
         for (let i = 0; i < 6; i++) {
             const deviation = this.frameCount * Math.abs(PIPE_VELOCITY * this.getLevel().speed);

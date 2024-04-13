@@ -13,7 +13,7 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import GUI from 'lil-gui'; 
 import Bird, { BIRD_GRAVITY } from './Bird';
 import Pipe from './Pipe';
-import { game2d } from '../App';
+import { game2d } from '../page';
 
 const BLOOM_SCENE = 1;
 const FLOOR_SCALE = 5;
@@ -235,7 +235,7 @@ export default class Game {
         sphereGeometry.rotateY(-Math.PI / 2);
 
         // Skybox
-        const sphereTexture = new THREE.TextureLoader().load( 'src/assets/space.jpg' );
+        const sphereTexture = new THREE.TextureLoader().load( '/assets/space.jpg' );
         sphereTexture.colorSpace = THREE.SRGBColorSpace;
         // sphereTexture.
         const sphereMaterial = new THREE.MeshStandardMaterial( { map: sphereTexture, envMapIntensity: 5 } );
@@ -248,7 +248,7 @@ export default class Game {
     private loadBird() {
         this.bird = new Bird(0, 0, 0);
 
-        this.loader.load('src/assets/phoenix_bird/scene.gltf', (gltf) => {
+        this.loader.load('/assets/phoenix_bird/scene.gltf', (gltf) => {
             this.birdModel = gltf.scene;
             this.birdModel.scale.set(0.005, 0.005, 0.005);
             this.birdModel.rotateY(Math.PI / 2);
@@ -270,7 +270,7 @@ export default class Game {
     }
 
     private loadPipe() {
-        this.loader.load('src/assets/sci-fi_pipes_armored/scene.gltf', (gltf) => {
+        this.loader.load('/assets/sci-fi_pipes_armored/scene.gltf', (gltf) => {
             this.pipeModel = gltf.scene;
 
             this.pipeModel.traverse((child) => {
@@ -286,7 +286,7 @@ export default class Game {
     }
 
     private loadFloor() {
-        this.loader.load('src/assets/endless_floor_vr/scene.gltf', (gltf) => {
+        this.loader.load('/assets/endless_floor_vr/scene.gltf', (gltf) => {
             // const newMaterial = new THREE.MeshStandardMaterial({ color: 0xffffff, emissive: 0xffffff, emissiveIntensity: 0.5 });
 
             this.floorModel = gltf.scene;
@@ -354,7 +354,7 @@ export default class Game {
     }
 
     private loadPortal() {
-        this.loader.load('src/assets/triangular_animated_portal/scene.gltf', (gltf) => {
+        this.loader.load('/assets/triangular_animated_portal/scene.gltf', (gltf) => {
             this.portalModel = gltf.scene;
 
             this.portalModel.traverse((child) => {
@@ -372,7 +372,7 @@ export default class Game {
     }
 
     private loadCrystal() {
-        this.loader.load('src/assets/crystal_kyber/scene.gltf', (gltf) => {
+        this.loader.load('/assets/crystal_kyber/scene.gltf', (gltf) => {
             this.crystalModel = gltf.scene;
 
             this.crystalModel?.traverse((child) => {
@@ -571,7 +571,7 @@ export default class Game {
 
     private async spawnPlanet() {
         const geometry = new THREE.SphereGeometry(50, 50, 50);
-        // const texture = new THREE.TextureLoader().load('src/assets/space.jpg');
+        // const texture = new THREE.TextureLoader().load('/assets/space.jpg');
         // texture.mapping = THREE.EquirectangularReflectionMapping;
         const material = new THREE.MeshPhysicalMaterial({
             roughness: 0, // has to be 0
@@ -621,7 +621,7 @@ export default class Game {
     }
 
     private spawnBird2D() {
-        const map = new THREE.TextureLoader().load('src/assets/flappy-bird/sprites/yellowbird-downflap.png');
+        const map = new THREE.TextureLoader().load('/assets/flappy-bird/sprites/yellowbird-downflap.png');
 
         const birdPos = PLANET_POSITION.map((pos, index) => pos + RELATIVE_PORTAL_POSITION[index]) as [number, number, number];
 
