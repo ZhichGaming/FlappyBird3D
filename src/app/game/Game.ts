@@ -13,7 +13,7 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import GUI from 'lil-gui'; 
 import Bird, { BIRD_GRAVITY } from './Bird';
 import Pipe from './Pipe';
-import { game2d } from '../page';
+import { game2d } from '../App';
 
 const BLOOM_SCENE = 1;
 const FLOOR_SCALE = 5;

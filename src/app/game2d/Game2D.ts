@@ -2,7 +2,7 @@ import { Vector2 } from "three";
 import Bird from "../game/Bird";
 import Pipe2D from "./Pipe2D";
 import Laser, { LASER_LEN, LASER_WIDTH, LaserColor } from "./Laser";
-import { game } from "../page";
+import { game } from "../App";
 
 export const BIRD_WIDTH = 34 * 2;
 export const BIRD_HEIGHT = 24 * 2;
