@@ -2,8 +2,11 @@
   "name": "flappybird3d",
   "private": true,
   "version": "0.0.0",
+  "homepage": "https://zhichgaming.github.io/flappybird3d",
   "type": "module",
   "scripts": {
+    "predeploy": "vite build",
+    "deploy": "gh-pages -d dist",
     "dev": "vite",
     "build": "tsc && vite build",
     "preview": "vite preview",
@@ -22,6 +25,7 @@
     "@types/react-dom": "^18.2.7",
     "@types/three": "^0.162.0",
     "@vitejs/plugin-react": "^4.2.1",
+    "gh-pages": "^6.1.1",
     "typescript": "^5.0.2",
     "vite": "^5.0.0"
   }
