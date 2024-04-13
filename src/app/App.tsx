@@ -8,6 +8,8 @@ import Game2D from "./game2d/Game2D";
 export let game: Game;
 export let game2d: Game2D;
 
+export const basePath = "/dimensional-bird";
+
 export default function App() {
   useEffect(() => {
     game = new Game();
