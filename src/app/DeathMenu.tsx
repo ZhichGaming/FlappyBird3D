@@ -1,5 +1,5 @@
 import { SFX } from "./game2d/SFX";
-import "./styles/DeathMenu.css";
+import "./styles/Deathmenu.css";
 import { useEffect } from "react";
 
 function DeathMenu({ handleRespawn, handleQuit }: { handleRespawn: () => void, handleQuit: () => void }): JSX.Element {
