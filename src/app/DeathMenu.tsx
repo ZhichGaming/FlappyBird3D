@@ -2,12 +2,12 @@ import { SFX } from "./game2d/SFX";
 import "./styles/deathMenu.css";
 import { useEffect } from "react";
 
-useEffect(() => {
-    SFX["death-music"].play();
-    SFX["death-music"].loop = true;
-}, []);
-
 function DeathMenu({ handleRespawn, handleQuit }: { handleRespawn: () => void, handleQuit: () => void }): JSX.Element {
+    useEffect(() => {
+        SFX["death-music"].play();
+        SFX["death-music"].loop = true;
+    }, []);
+
     return(
         <div className="death-menu-container">
             <h1 className="jersey-15-regular gameover-text">Game Over</h1>

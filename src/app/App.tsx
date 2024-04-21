@@ -6,6 +6,7 @@ import Game from "./game/Game";
 import Game2D from "./game2d/Game2D";
 import StartMenu from "./StartMenu";
 import DeathMenu from "./DeathMenu";
+import { SFX } from "./game2d/SFX";
 
 export let game: Game;
 export let game2d: Game2D;
@@ -27,6 +28,8 @@ export default function App() {
     document.querySelector(".start-menu")?.classList.add("hidden");
     document.querySelector(".death-menu")?.classList.add("hidden");
     document.querySelector(".canvas-container")?.classList.remove("hidden");
+
+    SFX["button-click"].play();
   }
 
   const handleEnd = () => {
@@ -37,6 +40,9 @@ export default function App() {
     game2d.reset();
     game2d.start();
     document.querySelector(".death-menu")?.classList.add("hidden");
+
+    SFX["button-click"].play();
+    SFX["death-music"].pause();
   }
 
   const handleQuit = () => {
@@ -44,6 +50,9 @@ export default function App() {
     document.querySelector(".death-menu")?.classList.add("hidden");
     document.querySelector(".canvas-container")?.classList.add("hidden");
     document.querySelector(".start-menu")?.classList.remove("hidden");
+
+    SFX["button-click"].play();
+    SFX["death-music"].pause();
   }
 
   return (
