@@ -21,6 +21,7 @@ export default function App() {
   }, []);
 
   const handleStart = () => {
+    game2d.reset();
     game2d.start();
 
     document.querySelector(".start-menu")?.classList.add("hidden");
@@ -33,11 +34,13 @@ export default function App() {
   }
 
   const handleRespawn = () => {
+    game2d.reset();
     game2d.start();
     document.querySelector(".death-menu")?.classList.add("hidden");
   }
 
   const handleQuit = () => {
+    game2d.reset();
     document.querySelector(".death-menu")?.classList.add("hidden");
     document.querySelector(".canvas-container")?.classList.add("hidden");
     document.querySelector(".start-menu")?.classList.remove("hidden");
