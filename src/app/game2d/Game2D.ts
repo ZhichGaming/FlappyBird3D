@@ -86,6 +86,8 @@ export default class Game2D {
     private stopped = false;
     private gameloopId: number = 0;
 
+    private restarted = false;
+
     score = 0;
     stage: GameState = GameState.NORMAL_PIPES;
 
@@ -115,6 +117,22 @@ export default class Game2D {
     stop() {
         cancelAnimationFrame(this.gameloopId);
         this.stopped = true;
+    }
+
+    reset() {
+        this.bird = new Bird(BIRD_X, 0, 0);        
+        this.bird.acceleration.y = BIRD_GRAVITY;
+        this.pipes = [];
+        this.bullets = [];
+        this.isGameOver = false;
+        this.score = 0;
+        this.stage = GameState.NORMAL_PIPES;
+        this.frameCount = 0;
+        this.stopped = false;
+
+        this.restarted = true;
+
+        this.delta();
     }
 
     private setupEventListeners() {
@@ -176,8 +194,9 @@ export default class Game2D {
         if (this.frameCount % this.getLevel().pipeInterval === 0) {
             const randomHeight = (Math.random() * 0.5) * window.innerHeight;
             const randomSpacing = Math.random() * this.getLevel().pipeSpacing + this.getLevel().pipeSpacing;
+            const isPortal = this.restarted ? false : this.score === 25;
 
-            this.pipes.push(new Pipe2D(PIPE_WIDTH, randomHeight, randomSpacing, this.score === 25, new Vector2(window.innerWidth, 0)));
+            this.pipes.push(new Pipe2D(PIPE_WIDTH, randomHeight, randomSpacing, isPortal, new Vector2(window.innerWidth, 0)));
         }
 
         // Part 1/2 of laser update, it's also updating in the render method
