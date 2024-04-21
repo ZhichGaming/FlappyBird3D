@@ -1,19 +1,21 @@
-import "./styles/menus.css";
+import "./styles/Deathmenu.css";
 
-function StartMenu() {
+function DeathMenu() {
     return(
-        <div className="background">
-            <div className="logo">
-                <img src="./assets/menu_imgs/logl.png" alt="img" />
+        <div className="container">
+            <div className="prompt">
+                <h1 className="jersey-15-regular">Game Over</h1>
             </div>
-            <div className="button">
-                <button typeof="button">start</button>
-            </div>
-            <div className="button">
-                <button>settings</button>
+            <div className="button-container">
+                <div className="buttons">
+                    <button>glitch</button>
+                </div>
+                <div className="buttons">
+                    <button>glitch</button>
+                </div>
             </div>
         </div>
     )
 }
 
-export default StartMenu;
+export default DeathMenu;

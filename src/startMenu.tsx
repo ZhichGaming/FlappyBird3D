@@ -1,13 +1,12 @@
-import "./styles/menus.css";
-import logo from "./assets/menu_imgs/logl.png";
+import "./styles/Startmenu.css";
 
 function StartMenu() {
     return(
         <div className="startmenu">
             <div className="logo">
-                <img src={logo} alt="img"/>
+                <h1 className="jersey-15-regular">DIMENTIONAL BIRD</h1>
             </div>
-            <div className="buttons">
+            <div className="button-container">
                 <button className="play-button">
                     P L A Y
                     <div id="clip">
