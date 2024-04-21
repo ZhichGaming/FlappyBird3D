@@ -2,7 +2,7 @@ import { Vector2 } from "three";
 import Bird from "../game/Bird";
 import Pipe2D from "./Pipe2D";
 import Laser, { LASER_LEN, LASER_WIDTH, LaserColor } from "./Laser";
-import { basePath, game } from "../App";
+import { game } from "../App";
 
 export const BIRD_WIDTH = 34 * 2;
 export const BIRD_HEIGHT = 24 * 2;
@@ -27,7 +27,7 @@ export const LEVELS = [
         laserInterval: 200,
     },
     {
-        requiredScore: 10,
+        requiredScore: 5,
         speed: 1.5,
         pipeSpacing: 150,
         pipeInterval: 70,
@@ -35,15 +35,15 @@ export const LEVELS = [
         lasers: false,
     },
     {
-        requiredScore: 20,
+        requiredScore: 10,
         speed: 2,
-        pipeSpacing: 150,
+        pipeSpacing: 100,
         pipeInterval: 50,
         movingPipes: true,
         lasers: false,
     },
     {
-        requiredScore: 30,
+        requiredScore: 15,
         speed: 2,
         pipeSpacing: 200,
         pipeInterval: 50,
@@ -53,7 +53,7 @@ export const LEVELS = [
         laserInterval: 200,
     },
     {
-        requiredScore: 40,
+        requiredScore: 20,
         speed: 2,
         pipeSpacing: 200,
         pipeInterval: 100,
@@ -85,7 +85,6 @@ export default class Game2D {
     private frameCount = 0;
     private stopped = false;
     private gameloopId: number = 0;
-    private restarted = false;
 
     score = 0;
     stage: GameState = GameState.NORMAL_PIPES;
@@ -96,9 +95,9 @@ export default class Game2D {
         this.canvas.width = window.innerWidth;
         this.canvas.height = window.innerHeight;
 
-        // this.canvas.style.backgroundImage = 'url("../assets/flappy-bird/sprites/background-day.png")';
+        // this.canvas.style.backgroundImage = 'url("src/assets/flappy-bird/sprites/background-day.png")';
         this.background = new Image();
-        this.background.src = basePath + '/assets/flappy-bird/sprites/background-day.png';
+        this.background.src = 'src/assets/flappy-bird/sprites/background-day.png';
 
         this.bird = new Bird(BIRD_X, 0, 0);
         this.bird.acceleration.y = BIRD_GRAVITY;
@@ -116,22 +115,6 @@ export default class Game2D {
     stop() {
         cancelAnimationFrame(this.gameloopId);
         this.stopped = true;
-    }
-
-    reset() {
-        this.bird = new Bird(BIRD_X, 0, 0);        
-        this.bird.acceleration.y = BIRD_GRAVITY;
-        this.pipes = [];
-        this.bullets = [];
-        this.isGameOver = false;
-        this.score = 0;
-        this.stage = GameState.NORMAL_PIPES;
-        this.frameCount = 0;
-        this.stopped = false;
-
-        this.restarted = true;
-
-        this.delta();
     }
 
     private setupEventListeners() {
@@ -180,21 +163,6 @@ export default class Game2D {
         });
 
         if ((isInPipe || !isAboveGround || isInLaser) && !this.bird.hidden) {
-            switch (true) {
-                case isInPipe:
-                    console.log('Bird collided with pipe');
-                    break;
-                case !isAboveGround:
-                    console.log('Bird hit the ground');
-                    break;
-                case isInLaser:
-                    console.log('Bird hit by laser');
-                    break;
-                default:
-                    console.log('Unknown death condition');
-                    break;
-            }
-            
             this.isGameOver = true;
         }
 
@@ -208,9 +176,8 @@ export default class Game2D {
         if (this.frameCount % this.getLevel().pipeInterval === 0) {
             const randomHeight = (Math.random() * 0.5) * window.innerHeight;
             const randomSpacing = Math.random() * this.getLevel().pipeSpacing + this.getLevel().pipeSpacing;
-            const isPortal = this.restarted ? false : this.score === 50;
 
-            this.pipes.push(new Pipe2D(PIPE_WIDTH, randomHeight, randomSpacing, isPortal, new Vector2(window.innerWidth, 0)));
+            this.pipes.push(new Pipe2D(PIPE_WIDTH, randomHeight, randomSpacing, this.score === 25, new Vector2(window.innerWidth, 0)));
         }
 
         // Part 1/2 of laser update, it's also updating in the render method
@@ -242,7 +209,7 @@ export default class Game2D {
 
             if (this.getLevel().movingPipes) {
                 const direction = pipe.position.y + pipe.spacing / 2 > window.innerHeight / 4 ? 1 : -1;
-                pipe.position.y += Math.sin(this.frameCount / 10) * 3 * direction;
+                pipe.position.y += Math.sin(this.frameCount / 10) * 5 * direction;
             }
 
             if (pipe.position.x + pipe.width < this.bird.position.x && !pipe.passed) {
@@ -275,7 +242,7 @@ export default class Game2D {
 
         this.ctx.clearRect(0, 0, this.canvas.width, this.canvas.height);
         // this.ctx.drawImage(this.background, 0, 0, this.canvas.width, this.canvas.height);
-        for (let i = 0; i < 6; i++) {
+        for (let i = 0; i < Math.ceil(this.canvas.width / this.background.width); i++) {
             this.ctx.drawImage(this.background, i * this.background.width, 0, this.background.width/this.background.height*this.canvas.height, this.canvas.height);
         }
 
@@ -301,7 +268,7 @@ export default class Game2D {
             'upflap',
         ];
         
-        birdImage.src = `${basePath}/assets/flappy-bird/sprites/yellowbird-${birdImageNames[birdState]}.png`;
+        birdImage.src = `src/assets/flappy-bird/sprites/yellowbird-${birdImageNames[birdState]}.png`;
 
         let sourceWidth = birdImage.width;
         let sourceHeight = birdImage.height;
@@ -326,7 +293,7 @@ export default class Game2D {
     private renderPipes() {
         this.pipes.forEach((pipe) => {
             const pipeImage = new Image();
-            pipeImage.src = `${basePath}/assets/flappy-bird/sprites/pipe-${this.getLevel().movingPipes ? "red" : "green"}.png`;
+            pipeImage.src = `src/assets/flappy-bird/sprites/pipe-${this.getLevel().movingPipes ? "red" : "green"}.png`;
 
             this.ctx.save();
             this.ctx.scale(1, -1);
@@ -341,7 +308,7 @@ export default class Game2D {
                 }
 
                 const portalImage = new Image();
-                portalImage.src = basePath + basePath + '/assets/portal.png';
+                portalImage.src = 'src/assets/portal.png';
 
                 const portalWidth = 498;
                 const portalHeight = 498;
@@ -361,7 +328,7 @@ export default class Game2D {
 
     private renderGround() {
         const groundImage = new Image();
-        groundImage.src = basePath + '/assets/flappy-bird/sprites/base.png';
+        groundImage.src = 'src/assets/flappy-bird/sprites/base.png';
 
         for (let i = 0; i < 6; i++) {
             const deviation = this.frameCount * Math.abs(PIPE_VELOCITY * this.getLevel().speed);
