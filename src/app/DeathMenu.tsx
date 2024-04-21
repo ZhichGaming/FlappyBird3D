@@ -1,4 +1,4 @@
-import "./styles/Deathmenu.css";
+import "./styles/deathMenu.css";
 
 function DeathMenu() {
     return(
@@ -8,10 +8,10 @@ function DeathMenu() {
             </div>
             <div className="button-container">
                 <div className="buttons">
-                    <button>glitch</button>
+                    <button className="respawn glitch-button jersey-15-light">RESPAWN</button>
                 </div>
                 <div className="buttons">
-                    <button>glitch</button>
+                    <button className="quit glitch-button jersey-15-light">QUIT</button>
                 </div>
             </div>
         </div>
