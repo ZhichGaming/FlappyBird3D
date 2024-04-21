@@ -1,4 +1,11 @@
+import { SFX } from "./game2d/SFX";
 import "./styles/startMenu.css";
+import { useEffect } from "react";
+
+useEffect(() => {
+    SFX["start-music"].play();
+    SFX["start-music"].loop = true;
+}, []);
 
 function StartMenu({ handleStart }: { handleStart: () => void }): JSX.Element {
     return(
