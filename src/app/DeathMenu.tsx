@@ -1,11 +1,11 @@
-import { SFX } from "./game2d/SFX";
+import { SFX } from "./App";
 import "./styles/deathMenu.css";
 import { useEffect } from "react";
 
 function DeathMenu({ handleRespawn, handleQuit }: { handleRespawn: () => void, handleQuit: () => void }): JSX.Element {
     useEffect(() => {
-        SFX["death-music"].play();
-        SFX["death-music"].loop = true;
+        SFX["death-music"]?.play();
+        SFX["death-music"] ? SFX["death-music"].loop = true : null;
     }, []);
 
     return(

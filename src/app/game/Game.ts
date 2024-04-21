@@ -13,8 +13,7 @@ import { RoomEnvironment } from 'three/addons/environments/RoomEnvironment.js';
 import GUI from 'lil-gui'; 
 import Bird, { BIRD_GRAVITY } from './Bird';
 import Pipe from './Pipe';
-import { basePath, game2d } from '../App';
-import { SFX } from '../game2d/SFX';
+import { SFX, basePath, game2d } from '../App';
 
 const BLOOM_SCENE = 1;
 const FLOOR_SCALE = 5;
@@ -179,11 +178,11 @@ export default class Game {
         this.controls.target = new THREE.Vector3(...PLANET_POSITION);
 
         //laser SFX
-        SFX["big-laser"].play();
+        SFX["big-laser"]?.play();
         
         //BGM
-        SFX["3d-theme"].play();
-        SFX["3d-theme"].loop = true;
+        SFX["3d-theme"]?.play();
+        SFX["3d-theme"] ? SFX["3d-theme"].loop = true : null;
 
         // Resize canvas on window resize
         window.addEventListener('resize', () => {
@@ -199,7 +198,7 @@ export default class Game {
         document.addEventListener('keydown', (event) => {
             if (event.key === ' ') {
                 this.jump();
-                SFX["bird-jump"].play();
+                SFX["bird-jump"]?.play();
             }
 
             if (event.key === 'a') {
@@ -713,8 +712,8 @@ export default class Game {
                         const pipeBox = new THREE.Box3().setFromObject(pipeModel);
 
                         if (birdBox.intersectsBox(pipeBox)) {
-                            SFX["hit-pipe"].play();
-                            SFX["3d-theme"].pause();
+                            SFX["hit-pipe"]?.play();
+                            SFX["3d-theme"]?.pause();
                             console.log('collision!');
                         }
                     }
