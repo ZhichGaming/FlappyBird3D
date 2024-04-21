@@ -1,5 +1,5 @@
 import { SFX } from "./game2d/SFX";
-import "./styles/Startmenu.css";
+import "./styles/startMenu.css";
 import { useEffect } from "react";
 
 function StartMenu({ handleStart }: { handleStart: () => void }): JSX.Element {
