@@ -3,6 +3,7 @@ import Bird from "../game/Bird";
 import Pipe2D from "./Pipe2D";
 import Laser, { LASER_LEN, LASER_WIDTH, LaserColor } from "./Laser";
 import { game } from "../App";
+import { SFX } from "./SFX";
 
 export const BIRD_WIDTH = 34 * 2;
 export const BIRD_HEIGHT = 24 * 2;
@@ -110,17 +111,21 @@ export default class Game2D {
 
     start() {
         this.gameLoop();
+        SFX["main-theme"].play();
+        SFX["main-theme"].loop = true;
     }
 
     stop() {
         cancelAnimationFrame(this.gameloopId);
         this.stopped = true;
+        SFX["main-theme"].pause();
     }
 
     private setupEventListeners() {
         document.addEventListener('keydown', (event) => {
             if (event.key === ' ') {
                 this.jump();
+                SFX["bird-jump"].play();
             }
         });
     }
@@ -164,6 +169,7 @@ export default class Game2D {
 
         if ((isInPipe || !isAboveGround || isInLaser) && !this.bird.hidden) {
             this.isGameOver = true;
+            SFX["hit-pipe"].play();
         }
 
         if (!this.bird.hidden) this.updateBird(delta);
@@ -190,6 +196,7 @@ export default class Game2D {
                     const randomY = Math.random() * window.innerHeight;
 
                     this.bullets.push(new Laser(this.canvas, this.ctx, new Vector2(window.innerWidth, window.innerHeight * Math.random()), new Vector2(BIRD_X, randomY), LaserColor.RED));
+                    SFX["small-laser"].play();
                 }
             }
         }
