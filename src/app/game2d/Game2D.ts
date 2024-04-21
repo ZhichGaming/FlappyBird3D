@@ -87,11 +87,12 @@ export default class Game2D {
     private gameloopId: number = 0;
 
     private restarted = false;
+    private handleEnd: () => void;
 
     score = 0;
     stage: GameState = GameState.NORMAL_PIPES;
 
-    constructor(canvas: HTMLCanvasElement) {
+    constructor(canvas: HTMLCanvasElement, handleEnd: () => void) {
         this.canvas = canvas;
         this.ctx = this.canvas.getContext('2d')!;
         this.canvas.width = window.innerWidth;
@@ -106,6 +107,8 @@ export default class Game2D {
         this.pipes = [];
         this.bullets = [];
         this.isGameOver = false;
+
+        this.handleEnd = handleEnd;
 
         this.setupEventListeners();
     }
@@ -280,6 +283,8 @@ export default class Game2D {
             this.ctx.fillStyle = 'red';
             this.ctx.font = '48px Arial';
             this.ctx.fillText('Game Over', this.canvas.width / 2 - 100, this.canvas.height / 2);
+
+            this.handleEnd();
         }
     }
 
