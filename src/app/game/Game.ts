@@ -177,13 +177,6 @@ export default class Game {
         this.camera.lookAt(...PLANET_POSITION);
         this.controls.target = new THREE.Vector3(...PLANET_POSITION);
 
-        //laser SFX
-        SFX["big-laser"]?.play();
-        
-        //BGM
-        SFX["3d-theme"]?.play();
-        SFX["3d-theme"] ? SFX["3d-theme"].loop = true : null;
-
         // Resize canvas on window resize
         window.addEventListener('resize', () => {
             const canvas = document.getElementById('canvas') as HTMLCanvasElement;
@@ -229,6 +222,13 @@ export default class Game {
         this.animate();
 
         this.planeMesh!.material.map!.needsUpdate = true;
+
+        //laser SFX
+        SFX["big-laser"]?.play();
+        
+        //BGM
+        SFX["3d-theme"]?.play();
+        SFX["3d-theme"] ? SFX["3d-theme"].loop = true : null;
     }
 
     public stop() {

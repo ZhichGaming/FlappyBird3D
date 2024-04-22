@@ -89,7 +89,7 @@ export default class Game2D {
     private restarted = false;
     private handleEnd: () => void;
 
-    score = 0;
+    score = 20;
     stage: GameState = GameState.NORMAL_PIPES;
 
     constructor(canvas: HTMLCanvasElement, handleEnd: () => void) {
@@ -125,18 +125,18 @@ export default class Game2D {
         SFX["main-theme"].pause();
     }
 
-    reset() {
+    reset(restarted = true) {
         this.bird = new Bird(BIRD_X, 0, 0);        
         this.bird.acceleration.y = BIRD_GRAVITY;
         this.pipes = [];
         this.bullets = [];
         this.isGameOver = false;
-        this.score = 0;
+        this.score = 20;
         this.stage = GameState.NORMAL_PIPES;
         this.frameCount = 0;
         this.stopped = false;
 
-        this.restarted = true;
+        this.restarted = restarted;
 
         this.delta();
     }
@@ -145,7 +145,7 @@ export default class Game2D {
         document.addEventListener('keydown', (event) => {
             if (event.key === ' ') {
                 this.jump();
-                SFX["bird-jump"]?.play();
+                (SFX["bird-jump"]?.cloneNode() as HTMLAudioElement).play();
             }
         });
     }

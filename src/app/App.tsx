@@ -34,7 +34,7 @@ export default function App() {
   }, []);
 
   const handleStart = () => {
-    game2d.reset();
+    game2d.reset(false);
     game2d.start();
 
     document.querySelector(".start-menu")?.classList.add("hidden");
@@ -42,6 +42,7 @@ export default function App() {
     document.querySelector(".canvas-container")?.classList.remove("hidden");
 
     SFX["button-click"].play();
+    SFX["start-music"].pause();
   }
 
   const handleEnd = () => {
@@ -49,7 +50,7 @@ export default function App() {
   }
 
   const handleRespawn = () => {
-    game2d.reset();
+    game2d.reset(false);
     game2d.start();
     document.querySelector(".death-menu")?.classList.add("hidden");
 

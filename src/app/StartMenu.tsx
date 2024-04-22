@@ -28,6 +28,7 @@ function StartMenu({ handleStart }: { handleStart: () => void }): JSX.Element {
                         </button>
                     </div>
                 </div>
+                <h1>Press <kbd>Space</kbd> to jump, <kbd>A</kbd> and <kbd>D</kbd> to strafe.</h1>
             </div>
         </div>
     )
