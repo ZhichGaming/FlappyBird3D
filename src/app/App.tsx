@@ -47,6 +47,9 @@ export default function App() {
 
   const handleEnd = () => {
     document.querySelector(".death-menu")?.classList.remove("hidden");
+
+    SFX["main-theme"].pause();
+    SFX["death-music"].play();
   }
 
   const handleRespawn = () => {
@@ -65,6 +68,7 @@ export default function App() {
     document.querySelector(".start-menu")?.classList.remove("hidden");
 
     SFX["button-click"].play();
+    SFX["start-music"].play();
     SFX["death-music"].pause();
   }
 
