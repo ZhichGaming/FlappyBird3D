@@ -16,7 +16,7 @@ export let SFX: { [name: string]: HTMLAudioElement } = {};
 
 export default function App() {
   useEffect(() => {
-    game = new Game();
+    game = new Game(handleEnd);
     // game.start();
     game2d = new Game2D(document.getElementById("game2d") as HTMLCanvasElement, handleEnd);
     // game2d.start();
@@ -35,7 +35,7 @@ export default function App() {
 
   const handleStart = () => {
     game2d.reset(false);
-    game2d.start();
+    game.start();
 
     document.querySelector(".start-menu")?.classList.add("hidden");
     document.querySelector(".death-menu")?.classList.add("hidden");
@@ -63,6 +63,7 @@ export default function App() {
 
   const handleQuit = () => {
     game2d.reset();
+    game = new Game(handleEnd);
     document.querySelector(".death-menu")?.classList.add("hidden");
     document.querySelector(".canvas-container")?.classList.add("hidden");
     document.querySelector(".start-menu")?.classList.remove("hidden");

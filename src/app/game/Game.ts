@@ -85,7 +85,9 @@ export default class Game {
     private portalMixer?: THREE.AnimationMixer;
     private portalAnimationProgress = -1;
 
-    constructor() {
+    private handleEnd: () => void;
+
+    constructor(handleEnd: () => void) {
         this.scene = new THREE.Scene();
         this.camera = new THREE.PerspectiveCamera(75, window.innerWidth / window.innerHeight, 0.1, 1000);
         // this.camera = new THREE.OrthographicCamera(window.innerWidth / - 2, window.innerWidth / 2, window.innerHeight / 2, window.innerHeight / - 2, 1, 1000);
@@ -95,6 +97,8 @@ export default class Game {
         this.controls = new OrbitControls(this.camera, this.renderer.domElement);
         this.clock = new THREE.Clock();
         this.materials = [];
+
+        this.handleEnd = handleEnd;
 
         // const gui = new GUI();
 
@@ -714,7 +718,8 @@ export default class Game {
                         if (birdBox.intersectsBox(pipeBox)) {
                             SFX["hit-pipe"]?.play();
                             SFX["3d-theme"]?.pause();
-                            console.log('collision!');
+                            
+                            this.handleEnd();
                         }
                     }
                 });
