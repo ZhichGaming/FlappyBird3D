@@ -89,7 +89,7 @@ export default class Game2D {
     private restarted = false;
     private handleEnd: () => void;
 
-    score = 20;
+    score = 0;
     stage: GameState = GameState.NORMAL_PIPES;
 
     constructor(canvas: HTMLCanvasElement, handleEnd: () => void) {
@@ -131,7 +131,7 @@ export default class Game2D {
         this.pipes = [];
         this.bullets = [];
         this.isGameOver = false;
-        this.score = 20;
+        this.score = 0;
         this.stage = GameState.NORMAL_PIPES;
         this.frameCount = 0;
         this.stopped = false;
