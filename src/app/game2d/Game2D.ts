@@ -20,7 +20,7 @@ export const LEVELS = [
         requiredScore: 0,
         speed: 1,
         pipeSpacing: 200,
-        pipeInterval: 100,
+        pipeInterval: 200,
         movingPipes: false,
         lasers: false,
         laserCount: 5,
@@ -30,15 +30,15 @@ export const LEVELS = [
         requiredScore: 5,
         speed: 1.5,
         pipeSpacing: 150,
-        pipeInterval: 70,
+        pipeInterval: 140,
         movingPipes: false,
         lasers: false,
     },
     {
         requiredScore: 10,
         speed: 2,
-        pipeSpacing: 150,
-        pipeInterval: 50,
+        pipeSpacing: 200,
+        pipeInterval: 70,
         movingPipes: true,
         lasers: false,
     },
@@ -46,7 +46,7 @@ export const LEVELS = [
         requiredScore: 15,
         speed: 2,
         pipeSpacing: 200,
-        pipeInterval: 50,
+        pipeInterval: 70,
         movingPipes: true,
         lasers: true,
         laserCount: 2,
@@ -237,7 +237,7 @@ export default class Game2D {
 
             if (this.getLevel().movingPipes) {
                 const direction = pipe.position.y + pipe.spacing / 2 > window.innerHeight / 4 ? 1 : -1;
-                pipe.position.y += Math.sin(this.frameCount / 10) * 5 * direction;
+                pipe.position.y += Math.sin(this.frameCount / 10) * 2 * direction;
             }
 
             if (pipe.position.x + pipe.width < this.bird.position.x && !pipe.passed) {
