@@ -35,7 +35,7 @@ export default function App() {
 
   const handleStart = () => {
     game2d.reset(false);
-    game.start();
+    game2d.start();
 
     document.querySelector(".start-menu")?.classList.add("hidden");
     document.querySelector(".death-menu")?.classList.add("hidden");
