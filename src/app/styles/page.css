@@ -5,3 +5,8 @@ canvas:focus {
 .hidden {
     display: none;
 }
+
+@font-face {
+    font-family: 'Jersey 10';
+    src: url("/dimensional-bird/Jersey10-Regular.ttf");
+}
