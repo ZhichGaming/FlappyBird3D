@@ -37,7 +37,7 @@ export const LEVELS = [
     {
         requiredScore: 10,
         speed: 2,
-        pipeSpacing: 100,
+        pipeSpacing: 150,
         pipeInterval: 50,
         movingPipes: true,
         lasers: false,
